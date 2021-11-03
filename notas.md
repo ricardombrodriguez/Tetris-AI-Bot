@@ -1,7 +1,5 @@
 # Notas sobre o projeto
 
-
-
 ## shapes.py
 
 Contem todos os tipos de formas
@@ -33,7 +31,7 @@ lista = [a,b,c]
 2 c
 ```
 
-Assim, o self.plan[self.rotation] vai retornar a forma na posição especificada. 
+Assim, o self.plan[self.rotation] vai retornar a forma na posição especificada.
 
 O y vai ser sempre igual e o line vai ser o valor que queremos (a lista da forma na posição devida).
 
@@ -42,8 +40,6 @@ O enumerate(line) faz o mesmo mas percorre cada pixel da lista e se for igual a 
 O translate(x,y) vai pegar no x=shift e no y=0 e vai estabelecer a nova posição ao invocar o set_pos(x,y).
 
 O set_pos(x,y) vai guardar o novo valor de x,y da peça e vai atualizar o self.positions consoante o shift dado.
-
-
 
 ## game.py
 
@@ -65,11 +61,7 @@ self.lateral.extend(): Preenche a ultima coluna (x=30 e 0<=y<=30)
 
 self.grid é o resultado da soma das duas listas anteriores, formando uma grid 10x30.
 
-
-
 metodo info(): retorna informação sobre a grid (self.grid), a peça atual (self.current_piece.positions), as proximas peças e a velocidade do jogo.
-
-
 
 metodo clear_rows():
 
@@ -80,8 +72,6 @@ Percorre cada linha no self.game em pares de tuplos ('1',8),('.',2).
 Se o count for igual a len(self.bottom) - 2: a linha deve ser eliminada e todas acima devem ser "dropadas".
 
 Quando as linhas são eliminadas, a velocidade do jogo aumenta.
-
-
 
 método loop():
 
@@ -102,10 +92,3 @@ Depois do y ser reduzido, verifica-se se a peça é valida ou não.
 Se for valid, é porque ainda não chegou ao chão. Se o 's' for pressionado, a peça vai descendo rapido. Se for 'w', é para fazer o rotate. Se for 'a' ou 'd', é para deslocar-se para a esquerda ou direita, respetivamente. Convém mencionar que o collide_lateral() verifica se a peça está a colidir com uma das margens, corrigindo a posição se necessário. Também se verifica se está a colidir lateralmente com outras peças.
 
  Se não for valid, é porque chegou ao chão. O self.game é atualizado com a posição da peça que foi encaixada, verifica-se se há linhas que podem ser eliminadas e a peça atual volta a ser None, pronto para ser outra peça a entrar no jogo.
-
-
-
-
-
-
-
