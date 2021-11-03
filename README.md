@@ -1,13 +1,16 @@
 # ia-tetris
+
 Projecto de Inteligência Artificial 2021 - Tetris
 
 ## How to install
 
 Make sure you are running Python 3.5 or higher
 
-`$ pip install -r requirements.txt`
+`python3 -m venv venv`
 
-*Tip: you might want to create a virtualenv first*
+`source venv/bin/activate`
+
+`$ pip install -r requirements.txt`
 
 ## How to play
 
@@ -31,6 +34,6 @@ Make sure pygame is properly installed:
 
 python -m pygame.examples.aliens
 
-# Tested on:
-- OSX Big Sur 11.6
+# Tested on
 
+- OSX Big Sur 11.6
