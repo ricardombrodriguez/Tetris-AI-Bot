@@ -1,14 +1,26 @@
 
-# Nos de uma arvore de pesquisa
-class SearchNode:
-    def __init__(self,state,parent,depth,cost): 
-        self.state = state
-        self.parent = parent
-        self.depth = depth
-        self.cost = cost
-        self.heuristic = 0
+"""
+Nós de uma arvore de pesquisa (uma das n possíveis soluções)
 
-    # função para verificar se já passamos por esse nó
+self.coordinates -> Coordenadas onde a peça vai repousar nesta solução
+self.score -> Pontos obtidos por esta solução (linhas completadas)
+self.keys -> 'keys' precisas até chegar até esta solução (array de keys)
+self.average_height -> Soma da altura de todas as colunas / num. de colunas (é uma boa heurística uma vez que smaller is better)
+self.bumpiness -> Serve para medir as diferenças em altura com as colunas adjacentes
+self.hole_weight -> Cada 'bloco' que é um buraco vai ter uma medida para calcular a sua dificuldade de remoção. Assim, quanto menor for este parâmetro,
+                    mais fáceis são de remover os buracos na grid
+"""
+
+class SearchNode:
+    def __init__(self,coordinates,score,keys,average_height,bumpiness,hole_weight): 
+        self.coordinates = coordinates
+        self.score = score
+        self.keys = keys
+        self.average_height = average_height
+        self.bumpiness = bumpiness
+        self.hole_weight = hole_weight
+
+    # função para verificar se já passamos por esse nó (pode dar jeito para evitar rotações repetidas!!!!!!!!)
     def in_parent(self, newstate):
         if self.state == newstate:
             return True
@@ -21,11 +33,11 @@ class SearchNode:
     def __repr__(self):
         return str(self)
 
-# Arvores de pesquisa
+# Árvore de pesquisa para encontrar a melhor solução
 class SearchTree:
 
-    # Construtor (coordenadas do 'game' e a peça atual)
-    def __init__(self, game, piece): 
+    # Construtor (recebe o parâmetro 'state' que tem toda a informação que precisamos para obter a melhor solução)
+    def __init__(self, state): 
         root = SearchNode()
         self.open_nodes = [root]
         self.solution = None
@@ -44,9 +56,6 @@ class SearchTree:
     # verificar se um nó já faz parte da solução para prevenir um ciclo
 
     def search(self,limit = None):
-
-        self.non_terminals = 0
-        self.terminals = 0
 
         while self.open_nodes != []:
 
