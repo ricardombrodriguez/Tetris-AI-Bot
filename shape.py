@@ -84,8 +84,8 @@ T = [
     [".....", "..1..", ".11..", "..1..", "....."],
 ]
 
-
 class Shape:
+
     def __init__(self, plan) -> None:
         self.plan = plan
         self.rotation = 0
