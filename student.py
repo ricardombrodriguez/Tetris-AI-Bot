@@ -29,18 +29,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 game_speed = state['game_speed']
 
                 if piece is None:
-                    print("nova!")
                     new_piece = True
                 elif new_piece is True:
-                    print("calculando")
+                    current_shape = findShape(piece)
+                    print(current_shape)
                     #t = SearchTree(game, piece)
                     #t.search()
                     new_piece = False
                 elif new_piece is False:
-                    print("mesma!")
+                    pass
                     # operações para mudar a key
 
-                print(piece)
+                #print(piece)
 
                 key = random.choice(["w","a","d"])
 
@@ -60,6 +60,21 @@ def solution(state):
 # A partir da solução obtida, retornar a key que é preciso premir para chegar à solução
 def searchKey():
     pass
+
+# Search the shape
+def findShape(piece):
+
+    piece_coords = []
+    for coord in piece:
+        piece_coords.append((coord[0] - 2, coord[1] - 1))
+
+    for shape in SHAPES:
+        if shape.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
+            print("Found shape")
+            return shape
+    
+    return None
+
 
 
 
