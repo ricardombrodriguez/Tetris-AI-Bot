@@ -73,7 +73,8 @@ class Game:
             self.current_piece.set_pos(
                 (self.dimensions.x - self.current_piece.dimensions.x) / 2, 0
             )
-            if not self.valid(self.current_piece):
+            logger.debug("Piece initial pos: %s", self.current_piece)   #for debugging
+            if not self.valid(self.current_piece): 
                 logger.info("GAME OVER")
                 self.running = False
 

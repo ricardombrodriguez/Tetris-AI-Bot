@@ -131,8 +131,8 @@ T = [
     
 ]
 
-
 class Shape:
+
     def __init__(self, plan) -> None:
         self.plan = plan
         self.rotation = 0
