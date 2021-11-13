@@ -22,25 +22,27 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
-                # Dados recebidos
-                game = state['game']
+                # Peça recebida
                 piece = state['piece']
-                next_pieces = state['next_pieces']
-                game_speed = state['game_speed']
+                print(state['game'])
 
+                # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
                     new_piece = True
+
+                # Encontrar a melhor solução para a nova peça
                 elif new_piece is True:
+                    print(piece)
                     current_shape = findShape(piece)
                     print(current_shape)
-                    #t = SearchTree(game, piece)
+                    #t = SearchTree(state,current_shape)
                     #t.search()
                     new_piece = False
+
+                # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
                 elif new_piece is False:
                     pass
                     # operações para mudar a key
-
-                #print(piece)
 
                 key = random.choice(["w","a","d"])
 
