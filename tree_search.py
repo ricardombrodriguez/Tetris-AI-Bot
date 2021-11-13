@@ -1,6 +1,9 @@
 
+actions = ["w","a","s","d"]
+
+
 """
-Nós de uma arvore de pesquisa (uma das n possíveis soluções)
+Nós de uma arvore de pesquisa (uma dos possíveis estados das coordenadas)
 
 self.coordinates -> Coordenadas onde a peça vai repousar nesta solução
 self.score -> Pontos obtidos por esta solução (linhas completadas)
@@ -12,6 +15,7 @@ self.hole_weight -> Cada 'bloco' que é um buraco vai ter uma medida para calcul
 """
 
 class SearchNode:
+
     def __init__(self,coordinates,score,keys,average_height,bumpiness,hole_weight): 
         self.coordinates = coordinates
         self.score = score
@@ -20,18 +24,6 @@ class SearchNode:
         self.bumpiness = bumpiness
         self.hole_weight = hole_weight
 
-    # função para verificar se já passamos por esse nó (pode dar jeito para evitar rotações repetidas!!!!!!!!)
-    def in_parent(self, newstate):
-        if self.state == newstate:
-            return True
-        if not self.parent:
-            return False
-        return self.parent.in_parent(newstate)
-
-    def __str__(self):
-        return "no(" + str(self.state) + "," + str(self.parent) + ")"
-    def __repr__(self):
-        return str(self)
 
 """
 Árvore de pesquisa para encontrar a melhor solução
@@ -39,39 +31,32 @@ class SearchNode:
 self.state -> Estado do jogo (atributos 'game','piece','next_pieces' e 'game_speed')
 self.shape -> Instância Shape da forma atual da 'piece'
 self.solution -> Para guardar a solução (um SearchNode)
-self.nodes -> Lista que guarda todas as soluções para depois ver qual é a melhor
+self.open_nodes -> Lista que guarda todas as soluções para depois ver qual é a melhor
 """
 
 class SearchTree:
 
     # Construtor (recebe o parâmetro 'state' que tem toda a informação que precisamos para obter a melhor solução)
     def __init__(self, state, shape): 
-        self.state = state      
+        self.state = state
+        self.game = state['game']
+        self.coords = state['piece']  
         self.shape = shape  
         self.solution = None
-        self.nodes = []
-
-    """
-    # obter o caminho (sequencia de estados) da raiz ate um no
-    def get_path(self,node):
-        if node.parent == None:
-            return [node.state]
-        path = self.get_path(node.parent)
-        path += [node.state]
-        return(path)
-    """
+        root = SearchNode(state['piece'], 0, [], 0, 0, 0)
+        self.open_nodes = [root]
+        self.possible_solutions = []
 
     def search(self):
 
-        possible_rotations = len(self.shape.plan)       # Guardar o número possíveis de rotação para esse shape
+        while self.open_nodes != []:
 
-        # Nota: No 'game', a primeira coluna da grid começa no 1 e a ultima linha acaba na 29
+            node = self.open_nodes.pop(0)
 
-        # Para cada rotação, verificar a solução por cada coluna
-        for rotation in range(0,possible_rotations):
+            lastNode = self.chechMoreActions(node)
 
-            # mudar o numero '10' para uma variavel qualquer que obtenha o nº de colunas
-            for column in range(1,11):
+            # Calcular aquelas variaveis todas (score, bumpiness e isso tudo)
+            # if lastNode:
 
                 # Guardar coordenadas onde a peça repousa
                 
@@ -88,28 +73,67 @@ class SearchTree:
                 # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
 
 
-                # As 'keys' necessárias (em array) para chegar às coordenadas sa solução
+                # As 'keys' necessárias (em array) para chegar às coordenadas da solução
 
-                pass
+            # Caso contrário, ainda dá para expandir este nó em mais possibilidades:
 
-        # Calcular a melhor solução
-        self.solution = None
-        return
+            newnodes = []   #Novos nós que vão ser adicionados
+            for key in actions:
+            
+                
+                # para cada ação possível, fazer as alterações
+                if self.valid(self.current_piece):
+                    if key == "s":
+                        while self.valid(self.current_piece):
+                            self.current_piece.y +=1
+                        self.current_piece.y -= 1
+                    elif key == "w":
+                        self.current_piece.rotate()
+                        if not self.valid(self.current_piece):
+                            self.current_piece.rotate(-1)
+                    elif key == "a":
+                        shift = -1
+                    elif key == "d":
+                        shift = +1
+
+                    if self._lastkeypress in ["a", "d"]:
+                        self.current_piece.translate(shift, 0)
+                        if self.collide_lateral(self.current_piece):
+                            self.current_piece.translate(-shift, 0)
+                        elif not self.valid(self.current_piece):
+                            self.current_piece.translate(-shift, 0) 
 
 
+            """
 
-    # juntar novos nos a lista de nos abertos de acordo com a estrategia
-    def add_to_open(self,lnewnodes):
-        if self.strategy == 'breadth':
-            self.open_nodes.extend(lnewnodes)
-        elif self.strategy == 'depth':
-            self.open_nodes[:0] = lnewnodes
-        elif self.strategy == 'greedy':
-            self.open_nodes.extend(lnewnodes)
-            self.open_nodes.sort(key=lambda x: x.heuristic)
-        elif self.strategy == 'uniform':
-            self.open_nodes.extend(lnewnodes)
-            self.open_nodes.sort(key=lambda x: x.cost)
-        elif self.strategy == 'a*':
-            self.open_nodes.extend(lnewnodes)
-            self.open_nodes.sort(key=lambda x: x.heuristic + x.cost)
+                
+                    #coordinates,score,keys,average_height,bumpiness,hole_weight
+                    newnode = SearchNode(newstate,node,node.depth+1, node.cost + self.problem.domain.cost(node.state,(node.state,newstate)))
+                    newnode.heuristic = self.problem.domain.heuristic(newnode.state,self.problem.goal)
+
+                
+
+            self.open_nodes.extend(newnodes)
+            #self.open_nodes.sort(key=lambda x: x.heuristic + x.cost)
+            """
+
+        return None
+
+    def valid(self, piece):
+        return not any(
+            [piece_part in self.grid for piece_part in piece.positions]
+        ) and not any(
+            [piece_part in self.game for piece_part in piece.positions]
+        )
+
+    
+    # Verificar se existe algum bloco ocupado em baixo dele, o que significa que acabou e é uma das soluções
+    def checkMoreActions(self,node):
+        for coords in node.coords:
+                below_coords = (coords[0], coords[1]-1)
+                if (self.game.contains(below_coords)):
+                    print("Open node!")
+                    self.possible_solutions.append(node)
+                    return True
+        return False
+
