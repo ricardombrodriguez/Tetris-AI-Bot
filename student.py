@@ -23,9 +23,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
+                print(state)
                 # Peça recebida
                 piece = state['piece']
-                print(piece)
 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
