@@ -11,15 +11,23 @@ self.hole_weight -> Cada 'bloco' que é um buraco vai ter uma medida para calcul
                     mais fáceis são de remover os buracos na grid
 """
 
+from collections import Counter
+
+
 class SearchNode:
 
     def __init__(self,shape,score,keys,average_height,bumpiness,hole_weight):
         self.shape = shape  # copia da instância do shape pai (tem coordenadas e isso tudo)
         self.score = score
         self.keys = keys
-        self.average_height = average_height
-        self.bumpiness = bumpiness
-        self.hole_weight = hole_weight
+
+    # função para verificar se já passamos por esse nó
+    def in_parent(self, newstate):
+        if self.state == newstate:
+            return True
+        if not self.parent:
+            return False
+        return self.parent.in_parent(newstate)
 
 
 """
@@ -40,7 +48,7 @@ class SearchTree:
         self.coords = state['piece']  
         self.shape = shape  
         self.solution = None
-        root = SearchNode(state['piece'], 0, [], 0, 0, 0)
+        root = SearchNode(shape, 0, [], 0, 0, 0)
         self.open_nodes = [root]
         self.possible_solutions = []
 
@@ -58,29 +66,41 @@ class SearchTree:
 
             node = self.open_nodes.pop(0)
 
-            # check if valid
-            isValid = self.isValid(node)
-            lastNode = self.checkMoreActions(node)
+            # check if valid and if's the last node
+            valid = self.isValid(node)
+
+            # nao cria nós "filhos" epassa para o proximo open node
+            if not valid:
+                continue
+
+            # verifica se é o ultimo nó, ou seja, se não vai divergir para novos nós (novas soluções)
+            lastNode = self.isLastNode(node)
 
             # Calcular aquelas variaveis todas (score, bumpiness e isso tudo)
-            # if lastNode and isValid:
+            if lastNode:
 
-                # Guardar coordenadas onde a peça repousa
+                # Guardar coordenadas onde a peça repousa e acrescentar ao grid para depois se poderem calcular as heuristicas
+                node.game = self.game.extend(node.shape.positions)
                 
-
                 # Guardar o score obtido pela colocação dessa peça (ou linhas eliminadas)
-
+                self.checkScore(node)
 
                 # A altura média do jogo depois de colocar essa peças
-
+                self.checkHeight(node)
 
                 # A pontuação do peso dos buracos depois da solução
-
+                self.checkHoleWeight(node)
 
                 # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
-
+                self.checkBumpiness(node)
 
                 # As 'keys' necessárias (em array) para chegar às coordenadas da solução
+                self.checkCost(node)
+
+                #Maybe uma formula para calcular heuristica
+                node.heuristic = self.calculateHeuristic(node)
+
+                self.possible_solutions.append(node)
 
 
 
@@ -111,7 +131,9 @@ class SearchTree:
                     if self.collide_lateral(newnode.shape):
                         newnode.shape.translate(-shift, 0)
                     elif not self.valid(newnode.shape):
-                        newnode.shape.translate(-shift, 0) 
+                        newnode.shape.translate(-shift, 0)
+
+                newnode.keys.append(key)        # adicionar key à lista de keys introduzidas para chegar a esse estado 
 
                 # maybe calcular a heuristica do newnode aqui!!!
 
@@ -119,6 +141,42 @@ class SearchTree:
             #self.open_nodes.sort(key=lambda x: x.heuristic + x.cost)
 
         return None
+
+    # DONE
+    def checkScore(self, node):
+        
+        lines = 0
+
+        for item, count in Counter(y for _, y in self.game).most_common():
+            if count == len(self._bottom) - 2:
+                self.game = [(x, y) for (x, y) in self.game if y != item]  # remove row
+                self.game = [
+                    (x, y + 1) if y < item else (x, y) for (x, y) in self.game
+                ]
+                lines += 1
+
+        self.score += lines ** 2
+        
+
+    def checkHeight(self, node):
+        #self.average_height = average_height
+        pass
+
+    def checkHoleWeight(self, node):
+        #self.hole_weight = hole_weight
+        pass
+
+    def checkBumpiness(self, node):
+        #self.bumpiness = bumpiness
+        pass
+
+    # DONE
+    def checkCost(self, node):
+        return len(node.keys)
+
+    #Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
+    def checkHeuristic(self, node):
+        pass
 
     def valid(self, piece):
         return not any(
@@ -133,12 +191,12 @@ class SearchTree:
         )
 
     # Verificar se existe algum bloco ocupado em baixo dele, o que significa que acabou e é uma das soluções
-    def checkMoreActions(self,node):
-        for coords in node.coords:
-                below_coords = (coords[0], coords[1]-1)
-                if (self.game.contains(below_coords)):
-                    print("Open node!")
-                    self.possible_solutions.append(node)
-                    return True
+    def isLastNode(self,node):
+        for coords in node.shape.positions:
+            below_coords = (coords[0], coords[1]+1)
+            #ver se bate na grid também
+            if (self.game.contains(below_coords) or self.grid.contains(below_coords)):
+                self.possible_solutions.append(node)
+                return True
         return False
 
