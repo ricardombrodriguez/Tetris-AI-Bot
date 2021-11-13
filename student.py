@@ -1,4 +1,5 @@
 import asyncio
+from copy import deepcopy
 import getpass
 import json
 import os
@@ -24,7 +25,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 # Peça recebida
                 piece = state['piece']
-                print(state['game'])
+                print(piece)
 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
@@ -32,9 +33,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 # Encontrar a melhor solução para a nova peça
                 elif new_piece is True:
-                    print(piece)
                     current_shape = findShape(piece)
-                    print(current_shape)
                     #t = SearchTree(state,current_shape)
                     #t.search()
                     new_piece = False
@@ -73,9 +72,7 @@ def findShape(piece):
     for shape in SHAPES:
         if shape.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
             print("Found shape")
-            return shape
-    
-    return None
+            return deepcopy(shape)
 
 
 
