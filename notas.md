@@ -92,24 +92,3 @@ Depois do y ser reduzido, verifica-se se a peça é valida ou não.
 Se for valid, é porque ainda não chegou ao chão. Se o 's' for pressionado, a peça vai descendo rapido. Se for 'w', é para fazer o rotate. Se for 'a' ou 'd', é para deslocar-se para a esquerda ou direita, respetivamente. Convém mencionar que o collide_lateral() verifica se a peça está a colidir com uma das margens, corrigindo a posição se necessário. Também se verifica se está a colidir lateralmente com outras peças
 
  Se não for valid, é porque chegou ao chão. O self.game é atualizado com a posição da peça que foi encaixada, verifica-se se há linhas que podem ser eliminadas e a peça atual volta a ser None, pronto para ser outra peça a entrar no jogo.
-<<<<<<< HEAD
-
-
-
-## students.py
-
-
-
-FIcheiro onde vamos ter a solução:
-
-Objetivos da nossa função de search:
-
-- aggregate height
-- holes
-- completed lines
-- bumpiness
-
-
-x = 2, y = 29 até x = 6 e y = 25
-=======
->>>>>>> be215d04241130e00e76d4df45e4f54d02de25c5
