@@ -5,7 +5,7 @@ import json
 import os
 import websockets
 from shape import SHAPES
-from tree_search import SearchTree
+from tree_search import *
 import random
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
@@ -15,6 +15,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         # Receive information about static game properties
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
 
+        print("INICIO")
+
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
 
         while True:
@@ -23,23 +25,25 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
-                print(state)
                 # Peça recebida
                 piece = state['piece']
 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
+
                     new_piece = True
 
                 # Encontrar a melhor solução para a nova peça
                 elif new_piece is True:
+
                     current_shape = findShape(piece)
-                    #t = SearchTree(state,current_shape)
-                    #t.search()
+                    t = SearchTree(state,current_shape)
+                    t.search()
                     new_piece = False
 
                 # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
                 elif new_piece is False:
+
                     pass
                     # operações para mudar a key
 

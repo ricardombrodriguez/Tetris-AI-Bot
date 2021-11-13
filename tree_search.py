@@ -12,6 +12,7 @@ self.hole_weight -> Cada 'bloco' que é um buraco vai ter uma medida para calcul
 """
 
 from collections import Counter
+from copy import deepcopy
 
 
 class SearchNode:
@@ -21,13 +22,6 @@ class SearchNode:
         self.score = score
         self.keys = keys
 
-    # função para verificar se já passamos por esse nó
-    def in_parent(self, newstate):
-        if self.state == newstate:
-            return True
-        if not self.parent:
-            return False
-        return self.parent.in_parent(newstate)
 
 
 """
@@ -51,23 +45,28 @@ class SearchTree:
         root = SearchNode(shape, 0, [], 0, 0, 0)
         self.open_nodes = [root]
         self.possible_solutions = []
+        print("INCIO DA SEARCH TREE")
 
         # Alterar isto depois, para receber o grid de alguma forma
         self.x = 10
         self.y = 30
-        self._bottom = [(i, y) for i in range(x)]  # bottom
-        self._lateral = [(0, i) for i in range(y)]  # left
-        self._lateral.extend([(x - 1, i) for i in range(y)])  # right
+        self._bottom = [(i, self.y) for i in range(self.x)]  # bottom
+        self._lateral = [(0, i) for i in range(self.y)]  # left
+        self._lateral.extend([(self.x - 1, i) for i in range(self.y)])  # right
         self.grid = self._bottom + self._lateral
 
     def search(self):
+
+        numero_iteracoes = 0
 
         while self.open_nodes != []:
 
             node = self.open_nodes.pop(0)
 
+            numero_iteracoes += 1
+
             # check if valid and if's the last node
-            valid = self.isValid(node)
+            valid = self.valid(node.shape)
 
             # nao cria nós "filhos" epassa para o proximo open node
             if not valid:
@@ -80,9 +79,9 @@ class SearchTree:
             if lastNode:
 
                 # Guardar coordenadas onde a peça repousa e acrescentar ao grid para depois se poderem calcular as heuristicas
-                node.game = self.game.extend(node.shape.positions)
-                
-                # Guardar o score obtido pela colocação dessa peça (ou linhas eliminadas)
+                node.game = self.game + node.shape.positions
+
+                # Guardar o score obtido pela colntocação dessa peça (ou linhas eliminadas)
                 self.checkScore(node)
 
                 # A altura média do jogo depois de colocar essa peças
@@ -98,7 +97,7 @@ class SearchTree:
                 self.checkCost(node)
 
                 #Maybe uma formula para calcular heuristica
-                node.heuristic = self.calculateHeuristic(node)
+                self.checkHeuristic(node)
 
                 self.possible_solutions.append(node)
 
@@ -109,11 +108,12 @@ class SearchTree:
 
             # Caso contrário, ainda dá para expandir este nó em mais possibilidades:
 
+            node.shape.y += 1
+
             newnodes = []               #Novos nós que vão ser adicionados
             for key in ["w","a","s","d"]:
             
-                newnode = SearchNode(node.shape,0,node.keys,0,0,0)  # criar um novo node para essa action
-
+                newnode = SearchNode(deepcopy(node.shape),0,node.keys,0,0,0)  # criar um novo node para essa action
                 # para cada ação possível, fazer as alterações
                     
                 if key == "s":
@@ -137,12 +137,15 @@ class SearchTree:
                         newnode.shape.translate(-shift, 0)
 
                 newnode.keys.append(key)        # adicionar key à lista de keys introduzidas para chegar a esse estado 
+                newnodes.append(newnode)
 
                 # maybe calcular a heuristica do newnode aqui!!!
 
             self.open_nodes.extend(newnodes)
             #self.open_nodes.sort(key=lambda x: x.heuristic + x.cost)
 
+        print("chegou ao final")
+        print("Numero de iterações: " + str(numero_iteracoes))
         # Calcular a solução com a melhor heuristica da self.possible_solutions
         return None
 
@@ -152,22 +155,24 @@ class SearchTree:
         lines = 0
 
         for item, count in Counter(y for _, y in node.game).most_common():
-            if count == len(node._bottom) - 2:
+            if count == len(self._bottom) - 2:
                 node.game = [(x, y) for (x, y) in node.game if y != item]  # remove row
                 node.game = [
                     (x, y + 1) if y < item else (x, y) for (x, y) in node.game
                 ]
                 lines += 1
 
-        self.score += lines ** 2
+        node.score += lines ** 2
 
 
     # DONE
     def checkHeight(self, node):
 
+        node.sum_height = 0
+
         for x in range(0, self.x):
             column_coords = [coord for coord in node.game if coord[0] == x]
-            self.sum_height += min(column_coords, key = lambda coord: coord[1])
+            node.sum_height += min(column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]
         # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
 
@@ -188,13 +193,13 @@ class SearchTree:
 
         for x in range(0, self.x):
             column_coords = [coord for coord in node.game if coord[0] == x]
-            height = min(column_coords, key = lambda coord: coord[1])  # descobre o topo da coluna
+            height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]  # descobre o topo da coluna
 
             # verificar se está bloquado acima
             severity = 1
             for y in range(height+1,self.y):
                 # espaço ocupado
-                if (column_coords.contains((x,y))):
+                if ((x,y) in column_coords):
                     severity += 1
                 # espaço vazio (é buraco)
                 else:
@@ -203,42 +208,45 @@ class SearchTree:
             # verificar se tem, nas colunas adjacentes, blocos que estão ao seu lado
             for y in range(0,self.y):
                 # se é um bloco vazio / buraco, verificar se existem blocos ao seu lado esquerdo e ao lado direito
-                if not column_coords.contains((x,y)):
+                if not ((x,y) in column_coords):
                     # à esquerda
-                    if node.game.contains((x-1,y)):
+                    if (x-1,y) in node.game:
                         hole_weight += 1
-                    if node.game.contains((x+1,y)):
+                    if (x+1,y) in node.game:
                         hole_weight += 1
 
-        self.hole_weight = hole_weight
+        node.hole_weight = hole_weight
         #Nota: quanto maior a hole_weight, pior a solução
 
 
     # DONE
     def checkBumpiness(self, node):
 
+        node.bumpiness = 0
+
         # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
         for x in range(0, self.x-1):
             this_column_coords = [coord for coord in node.game if coord[0] == x]
-            this_height = min(this_column_coords, key = lambda coord: coord[1])  # descobre o topo da coluna
+            this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]  # descobre o topo da coluna
 
             next_column_coords = [coord for coord in node.game if coord[0] == x+1]
-            next_height = min(next_column_coords, key = lambda coord: coord[1])  # descobre o topo da coluna
+            next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]  # descobre o topo da coluna
 
             absolute_difference = abs(next_height - this_height)
-            self.bumpiness += absolute_difference
+            node.bumpiness += absolute_difference
 
         # Nota: quanto maior a bumpiness, pior a solução
 
 
     # DONE
     def checkCost(self, node):
-        return len(node.keys)
+        node.cost = len(node.keys)
+
 
     # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
     # A solução com a maior heuristica é a escolhida
     def checkHeuristic(self, node):
-        pass
+        node.heuristic = 0
 
     def valid(self, piece):
         return not any(
@@ -257,7 +265,7 @@ class SearchTree:
         for coords in node.shape.positions:
             below_coords = (coords[0], coords[1]+1)
             #ver se bate na grid também
-            if (self.game.contains(below_coords) or self.grid.contains(below_coords)):
+            if (below_coords in self.game or below_coords in self.grid):
                 self.possible_solutions.append(node)
                 return True
         return False
