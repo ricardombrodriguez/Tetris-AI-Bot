@@ -33,17 +33,25 @@ class SearchNode:
     def __repr__(self):
         return str(self)
 
-# Árvore de pesquisa para encontrar a melhor solução
+"""
+Árvore de pesquisa para encontrar a melhor solução
+
+self.state -> Estado do jogo (atributos 'game','piece','next_pieces' e 'game_speed')
+self.shape -> Instância Shape da forma atual da 'piece'
+self.solution -> Para guardar a solução (um SearchNode)
+self.nodes -> Lista que guarda todas as soluções para depois ver qual é a melhor
+"""
+
 class SearchTree:
 
     # Construtor (recebe o parâmetro 'state' que tem toda a informação que precisamos para obter a melhor solução)
-    def __init__(self, state): 
-        root = SearchNode()
-        self.open_nodes = [root]
+    def __init__(self, state, shape): 
+        self.state = state      
+        self.shape = shape  
         self.solution = None
-        self.length = 0
-        self.cost = None
+        self.nodes = []
 
+    """
     # obter o caminho (sequencia de estados) da raiz ate um no
     def get_path(self,node):
         if node.parent == None:
@@ -51,50 +59,44 @@ class SearchTree:
         path = self.get_path(node.parent)
         path += [node.state]
         return(path)
+    """
 
-    # procurar a solucao
-    # verificar se um nó já faz parte da solução para prevenir um ciclo
+    def search(self):
 
-    def search(self,limit = None):
+        possible_rotations = len(self.shape.plan)       # Guardar o número possíveis de rotação para esse shape
 
-        while self.open_nodes != []:
+        # Nota: No 'game', a primeira coluna da grid começa no 1 e a ultima linha acaba na 29
 
-            node = self.open_nodes.pop(0)
+        # Para cada rotação, verificar a solução por cada coluna
+        for rotation in range(0,possible_rotations):
 
-            if self.problem.goal_test(node.state):
-                self.solution = node
-                self.length = self.solution.depth
-                self.terminals = len(self.open_nodes) + 1
-                self.avg_branching = round((self.non_terminals + self.terminals - 1) / self.non_terminals,2)
-                self.cost = node.cost
-                self.average_depth = sum(self.all_node_depth)/len(self.all_node_depth)
-                return self.get_path(node)
+            # mudar o numero '10' para uma variavel qualquer que obtenha o nº de colunas
+            for column in range(1,11):
 
-            self.non_terminals += 1
-
-            if limit and node.depth >= limit:
-                continue
-            
-            lnewnodes = []
-            for a in self.problem.domain.actions(node.state):
+                # Guardar coordenadas onde a peça repousa
                 
-                newstate = self.problem.domain.result(node.state,a)
-                newnode = SearchNode(newstate,node,node.depth+1, node.cost + self.problem.domain.cost(node.state,(node.state,newstate)))
-                newnode.heuristic = self.problem.domain.heuristic(newnode.state,self.problem.goal)
 
-                if (newnode.cost > self.highest_cost_nodes[0].cost):
-                    self.highest_cost_nodes = [newnode]*5
-                elif (newnode.cost == self.highest_cost_nodes[0].cost and newnode not in self.highest_cost_nodes):
-                    self.highest_cost_nodes.append(newnode)
-                    self.highest_cost_nodes = self.highest_cost_nodes[1:]
-                if not node.in_parent(newstate):
-                    lnewnodes.append(newnode)
+                # Guardar o score obtido pela colocação dessa peça (ou linhas eliminadas)
 
-                self.all_node_depth.append(newnode.depth)
 
-            self.add_to_open(lnewnodes)
+                # A altura média do jogo depois de colocar essa peças
 
-        return None
+
+                # A pontuação do peso dos buracos depois da solução
+
+
+                # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
+
+
+                # As 'keys' necessárias (em array) para chegar às coordenadas sa solução
+
+                pass
+
+        # Calcular a melhor solução
+        self.solution = None
+        return
+
+
 
     # juntar novos nos a lista de nos abertos de acordo com a estrategia
     def add_to_open(self,lnewnodes):
