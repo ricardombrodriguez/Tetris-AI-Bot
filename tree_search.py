@@ -53,8 +53,8 @@ class SearchTree:
         self.possible_solutions = []
 
         # Alterar isto depois, para receber o grid de alguma forma
-        x = 10
-        y = 30
+        self.x = 10
+        self.y = 30
         self._bottom = [(i, y) for i in range(x)]  # bottom
         self._lateral = [(0, i) for i in range(y)]  # left
         self._lateral.extend([(x - 1, i) for i in range(y)])  # right
@@ -102,6 +102,9 @@ class SearchTree:
 
                 self.possible_solutions.append(node)
 
+                # depois podemos fazer uma cena para calcular, outra vez, as soluções das proximas peças enquanto esta já foi descoberta e está a ser
+                # movimentada
+
 
 
             # Caso contrário, ainda dá para expandir este nó em mais possibilidades:
@@ -140,6 +143,7 @@ class SearchTree:
             self.open_nodes.extend(newnodes)
             #self.open_nodes.sort(key=lambda x: x.heuristic + x.cost)
 
+        # Calcular a solução com a melhor heuristica da self.possible_solutions
         return None
 
     # DONE
@@ -147,34 +151,92 @@ class SearchTree:
         
         lines = 0
 
-        for item, count in Counter(y for _, y in self.game).most_common():
-            if count == len(self._bottom) - 2:
-                self.game = [(x, y) for (x, y) in self.game if y != item]  # remove row
-                self.game = [
-                    (x, y + 1) if y < item else (x, y) for (x, y) in self.game
+        for item, count in Counter(y for _, y in node.game).most_common():
+            if count == len(node._bottom) - 2:
+                node.game = [(x, y) for (x, y) in node.game if y != item]  # remove row
+                node.game = [
+                    (x, y + 1) if y < item else (x, y) for (x, y) in node.game
                 ]
                 lines += 1
 
         self.score += lines ** 2
-        
 
+
+    # DONE
     def checkHeight(self, node):
-        #self.average_height = average_height
-        pass
 
+        for x in range(0, self.x):
+            column_coords = [coord for coord in node.game if coord[0] == x]
+            self.sum_height += min(column_coords, key = lambda coord: coord[1])
+        # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
+
+
+    """
+    Como calcular o peso cumulativo dos buracos no jogo:
+
+    Uma célula/bloco vazio do jogo é um buraco quando:
+    - Está bloqueada, no seu topo, por um bloco ocupado ou por um buraco (uma célula vazia que também tem um bloco ocupado em cima dele)
+    - Está a uma altura menor ou igual da maior altura da coluna adjacente (seja esta a coluna da esquerda ou da direita)
+    - Nota: quanto mais em baixo estiverem os buracos, maior a sua classificação, uma vez que estes são mais dificeis de se remover
+    """
+
+    # DONE
     def checkHoleWeight(self, node):
-        #self.hole_weight = hole_weight
-        pass
+        # Para cada coluna, verificar as heuristicas descritas acima ^^
 
+        hole_weight = 0
+
+        for x in range(0, self.x):
+            column_coords = [coord for coord in node.game if coord[0] == x]
+            height = min(column_coords, key = lambda coord: coord[1])  # descobre o topo da coluna
+
+            # verificar se está bloquado acima
+            severity = 1
+            for y in range(height+1,self.y):
+                # espaço ocupado
+                if (column_coords.contains((x,y))):
+                    severity += 1
+                # espaço vazio (é buraco)
+                else:
+                    hole_weight += severity
+
+            # verificar se tem, nas colunas adjacentes, blocos que estão ao seu lado
+            for y in range(0,self.y):
+                # se é um bloco vazio / buraco, verificar se existem blocos ao seu lado esquerdo e ao lado direito
+                if not column_coords.contains((x,y)):
+                    # à esquerda
+                    if node.game.contains((x-1,y)):
+                        hole_weight += 1
+                    if node.game.contains((x+1,y)):
+                        hole_weight += 1
+
+        self.hole_weight = hole_weight
+        #Nota: quanto maior a hole_weight, pior a solução
+
+
+    # DONE
     def checkBumpiness(self, node):
-        #self.bumpiness = bumpiness
-        pass
+
+        # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
+        for x in range(0, self.x-1):
+            this_column_coords = [coord for coord in node.game if coord[0] == x]
+            this_height = min(this_column_coords, key = lambda coord: coord[1])  # descobre o topo da coluna
+
+            next_column_coords = [coord for coord in node.game if coord[0] == x+1]
+            next_height = min(next_column_coords, key = lambda coord: coord[1])  # descobre o topo da coluna
+
+            absolute_difference = abs(next_height - this_height)
+            self.bumpiness += absolute_difference
+
+        # Nota: quanto maior a bumpiness, pior a solução
+
 
     # DONE
     def checkCost(self, node):
         return len(node.keys)
 
-    #Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
+    # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
+    # A solução com a maior heuristica é a escolhida
     def checkHeuristic(self, node):
         pass
 
