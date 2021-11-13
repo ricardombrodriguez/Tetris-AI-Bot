@@ -34,8 +34,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 # Encontrar a melhor solução para a nova peça
                 elif new_piece is True:
                     current_shape = findShape(piece)
-                    #t = SearchTree(state,current_shape)
-                    #t.search()
+                    t = SearchTree(state,current_shape)
+                    t.search_best_position()
                     new_piece = False
 
                 # Usar a próxima 'key' para se chegarem às coordenadas pretendidas

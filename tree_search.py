@@ -53,7 +53,7 @@ class SearchTree:
 
             node = self.open_nodes.pop(0)
 
-            lastNode = self.chechMoreActions(node)
+            lastNode = self.checkMoreActions(node)
 
             # Calcular aquelas variaveis todas (score, bumpiness e isso tudo)
             # if lastNode:
@@ -105,8 +105,6 @@ class SearchTree:
 
 
             """
-
-                
                     #coordinates,score,keys,average_height,bumpiness,hole_weight
                     newnode = SearchNode(newstate,node,node.depth+1, node.cost + self.problem.domain.cost(node.state,(node.state,newstate)))
                     newnode.heuristic = self.problem.domain.heuristic(newnode.state,self.problem.goal)
@@ -129,9 +127,9 @@ class SearchTree:
     
     # Verificar se existe algum bloco ocupado em baixo dele, o que significa que acabou e é uma das soluções
     def checkMoreActions(self,node):
-        for coords in node.coords:
-                below_coords = (coords[0], coords[1]-1)
-                if (self.game.contains(below_coords)):
+        for coords in node.coordinates:
+                below_coords = [coords[0], coords[1]-1]
+                if (below_coords in self.game):
                     print("Open node!")
                     self.possible_solutions.append(node)
                     return True
