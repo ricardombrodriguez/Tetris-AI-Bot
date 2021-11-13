@@ -4,16 +4,17 @@ import json
 import os
 import websockets
 from shape import SHAPES
+from tree_search import SearchTree
+import random
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
-
-    # Guardar variáveis:
-    current_shape = None        #Tipo de forma
 
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
 
         # Receive information about static game properties
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
+
+        new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
 
         while True:
             try:
@@ -21,34 +22,30 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
-                # Dados recebidos
-                game = state['game']
+                # Peça recebida
                 piece = state['piece']
-                next_pieces = state['next_pieces']
-                game_speed = state['game_speed']
+                print(state['game'])
 
+                # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
-                    current_shape = None
-                elif current_shape is not None:
-                    continue
-                else:
+                    new_piece = True
+
+                # Encontrar a melhor solução para a nova peça
+                elif new_piece is True:
+                    print(piece)
                     current_shape = findShape(piece)
+                    print(current_shape)
+                    #t = SearchTree(state,current_shape)
+                    #t.search()
+                    new_piece = False
 
+                # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
+                elif new_piece is False:
+                    pass
+                    # operações para mudar a key
 
-                print("PIECE:")
-                print(piece)
-                print("GAME:")
-                print(game)
-                print("=====================")
-                
+                key = random.choice(["w","a","d"])
 
-                # Verificar se mudou a forma. Caso isto se verifique, procurar qual é a peça correspondente e guardar numa variável e, depois disso
-                # procurar uma solução para a peça.
-
-
-                solution(state)
-                key = searchKey()
-                key = "s"
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
                 )  # send key command to server - you must implement this send in the AI agent
@@ -74,8 +71,13 @@ def findShape(piece):
         piece_coords.append((coord[0] - 2, coord[1] - 1))
 
     for shape in SHAPES:
-        if shape.positions == piece_coords:
+        if shape.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
+            print("Found shape")
             return shape
+    
+    return None
+
+
 
 
 # DO NOT CHANGE THE LINES BELLOW
