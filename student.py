@@ -39,15 +39,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     current_shape = findShape(piece)
                     t = SearchTree(state,current_shape)
                     t.search()
+                    solution = t.solution
                     new_piece = False
 
                 # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
                 elif new_piece is False:
 
-                    pass
+                    key = solution.keys.pop(0)
                     # operações para mudar a key
 
-                key = random.choice(["w","a","d"])
+                #key = random.choice(["w","a","d"])
 
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})

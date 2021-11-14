@@ -67,10 +67,6 @@ class SearchTree:
 
             numero_iteracoes += 1
             print(numero_iteracoes)
-            print(node.keys)
-
-            if numero_iteracoes == 5:
-                sys.exit()
 
             # check if valid and if's the last node
             valid = self.valid(node.shape)
@@ -166,7 +162,8 @@ class SearchTree:
         print("chegou ao final")
         print("Numero de iterações: " + str(numero_iteracoes))
         # Calcular a solução com a melhor heuristica da self.possible_solutions
-        return None
+        self.solution = max(self.possible_solutions,key=lambda node: node.heuristic)
+
 
     # DONE
     def checkScore(self, node):
@@ -265,7 +262,7 @@ class SearchTree:
     # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
     # A solução com a maior heuristica é a escolhida
     def checkHeuristic(self, node):
-        node.heuristic = 0
+        node.heuristic = 50 * node.score - 10 * (node.sum_height - node.hole_weight - node.bumpiness - node.cost)
 
     def valid(self, piece):
         return not any(
