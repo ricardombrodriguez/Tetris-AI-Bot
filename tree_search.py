@@ -1,3 +1,4 @@
+actions = ["s","a","d","w"]
 
 """
 Nós de uma arvore de pesquisa (uma dos possíveis estados das coordenadas)
@@ -13,11 +14,12 @@ self.hole_weight -> Cada 'bloco' que é um buraco vai ter uma medida para calcul
 
 from collections import Counter
 from copy import deepcopy
+import sys
 
 
 class SearchNode:
 
-    def __init__(self,shape,score,keys,average_height,bumpiness,hole_weight):
+    def __init__(self,shape,score,keys):
         self.shape = shape  # copia da instância do shape pai (tem coordenadas e isso tudo)
         self.score = score
         self.keys = keys
@@ -42,7 +44,7 @@ class SearchTree:
         self.coords = state['piece']  
         self.shape = shape  
         self.solution = None
-        root = SearchNode(shape, 0, [], 0, 0, 0)
+        root = SearchNode(shape, 0, [])
         self.open_nodes = [root]
         self.possible_solutions = []
         print("INCIO DA SEARCH TREE")
@@ -64,6 +66,11 @@ class SearchTree:
             node = self.open_nodes.pop(0)
 
             numero_iteracoes += 1
+            print(numero_iteracoes)
+            print(node.keys)
+
+            if numero_iteracoes == 5:
+                sys.exit()
 
             # check if valid and if's the last node
             valid = self.valid(node.shape)
@@ -101,9 +108,20 @@ class SearchTree:
 
                 self.possible_solutions.append(node)
 
-                # depois podemos fazer uma cena para calcular, outra vez, as soluções das proximas peças enquanto esta já foi descoberta e está a ser
-                # movimentada
+                print(" ==== HEURISTICS ===")
+                print("SCORE")
+                print(node.score)
+                print("sum_height")
+                print(node.sum_height)
+                print("hole")
+                print(node.hole_weight)
+                print("bumpiness")
+                print(node.bumpiness)
+                print("cost")
+                print(node.keys)
+                print(node.cost)
 
+                print("........")
 
 
             # Caso contrário, ainda dá para expandir este nó em mais possibilidades:
@@ -111,38 +129,39 @@ class SearchTree:
             node.shape.y += 1
 
             newnodes = []               #Novos nós que vão ser adicionados
-            for key in ["w","a","s","d"]:
+            for keypress in actions:
             
-                newnode = SearchNode(deepcopy(node.shape),0,node.keys,0,0,0)  # criar um novo node para essa action
+                newnode = SearchNode(deepcopy(node.shape),0,node.keys[:])  # criar um novo node para essa action
+
                 # para cada ação possível, fazer as alterações
                     
-                if key == "s":
+                if keypress == "s":
                     while self.valid(newnode.shape):
                         newnode.shape.y +=1
                     newnode.shape.y -= 1
-                elif key == "w":
+                elif keypress == "w":
                     newnode.shape.rotate()
                     if not self.valid(newnode.shape):
                         newnode.shape.rotate(-1)
-                elif key == "a":
+                elif keypress == "a":
                     shift = -1
-                elif key == "d":
+                elif keypress == "d":
                     shift = +1
 
-                if key in ["a", "d"]:
+                if keypress in ["a", "d"]:
                     newnode.shape.translate(shift, 0)
                     if self.collide_lateral(newnode.shape):
                         newnode.shape.translate(-shift, 0)
                     elif not self.valid(newnode.shape):
                         newnode.shape.translate(-shift, 0)
 
-                newnode.keys.append(key)        # adicionar key à lista de keys introduzidas para chegar a esse estado 
                 newnodes.append(newnode)
 
                 # maybe calcular a heuristica do newnode aqui!!!
 
+            # a* search
             self.open_nodes.extend(newnodes)
-            #self.open_nodes.sort(key=lambda x: x.heuristic + x.cost)
+            #self.open_nodes.sort(key=lambda node: node.heuristic)
 
         print("chegou ao final")
         print("Numero de iterações: " + str(numero_iteracoes))
