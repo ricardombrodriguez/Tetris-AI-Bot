@@ -1,7 +1,4 @@
 
-actions = ["w","a","s","d"]
-
-
 """
 Nós de uma arvore de pesquisa (uma dos possíveis estados das coordenadas)
 
@@ -16,8 +13,8 @@ self.hole_weight -> Cada 'bloco' que é um buraco vai ter uma medida para calcul
 
 class SearchNode:
 
-    def __init__(self,coordinates,score,keys,average_height,bumpiness,hole_weight): 
-        self.coordinates = coordinates
+    def __init__(self,shape,score,keys,average_height,bumpiness,hole_weight):
+        self.shape = shape  # copia da instância do shape pai (tem coordenadas e isso tudo)
         self.score = score
         self.keys = keys
         self.average_height = average_height
@@ -47,16 +44,26 @@ class SearchTree:
         self.open_nodes = [root]
         self.possible_solutions = []
 
-    def search_best_position(self):
+        # Alterar isto depois, para receber o grid de alguma forma
+        x = 10
+        y = 30
+        self._bottom = [(i, y) for i in range(x)]  # bottom
+        self._lateral = [(0, i) for i in range(y)]  # left
+        self._lateral.extend([(x - 1, i) for i in range(y)])  # right
+        self.grid = self._bottom + self._lateral
+
+    def search(self):
 
         while self.open_nodes != []:
 
             node = self.open_nodes.pop(0)
 
+            # check if valid
+            # isValid = self.isValid(node)
             lastNode = self.checkMoreActions(node)
 
             # Calcular aquelas variaveis todas (score, bumpiness e isso tudo)
-            # if lastNode:
+            # if lastNode and isValid:
 
                 # Guardar coordenadas onde a peça repousa
                 
@@ -75,45 +82,41 @@ class SearchTree:
 
                 # As 'keys' necessárias (em array) para chegar às coordenadas da solução
 
+
+
             # Caso contrário, ainda dá para expandir este nó em mais possibilidades:
 
-            newnodes = []   #Novos nós que vão ser adicionados
-            for key in actions:
+            newnodes = []               #Novos nós que vão ser adicionados
+            for key in ["w","a","s","d"]:
             
-                
+                newnode = SearchNode(node.shape,0,node.keys,0,0,0)  # criar um novo node para essa action
+
                 # para cada ação possível, fazer as alterações
-                if self.valid(self.current_piece):
-                    if key == "s":
-                        while self.valid(self.current_piece):
-                            self.current_piece.y +=1
-                        self.current_piece.y -= 1
-                    elif key == "w":
-                        self.current_piece.rotate()
-                        if not self.valid(self.current_piece):
-                            self.current_piece.rotate(-1)
-                    elif key == "a":
-                        shift = -1
-                    elif key == "d":
-                        shift = +1
+                    
+                if key == "s":
+                    while self.valid(newnode.shape):
+                        newnode.shape.y +=1
+                    newnode.shape.y -= 1
+                elif key == "w":
+                    newnode.shape.rotate()
+                    if not self.valid(newnode.shape):
+                        newnode.shape.rotate(-1)
+                elif key == "a":
+                    shift = -1
+                elif key == "d":
+                    shift = +1
 
-                    if self._lastkeypress in ["a", "d"]:
-                        self.current_piece.translate(shift, 0)
-                        if self.collide_lateral(self.current_piece):
-                            self.current_piece.translate(-shift, 0)
-                        elif not self.valid(self.current_piece):
-                            self.current_piece.translate(-shift, 0) 
+                if key in ["a", "d"]:
+                    newnode.shape.translate(shift, 0)
+                    if self.collide_lateral(newnode.shape):
+                        newnode.shape.translate(-shift, 0)
+                    elif not self.valid(newnode.shape):
+                        newnode.shape.translate(-shift, 0) 
 
-
-            """
-                    #coordinates,score,keys,average_height,bumpiness,hole_weight
-                    newnode = SearchNode(newstate,node,node.depth+1, node.cost + self.problem.domain.cost(node.state,(node.state,newstate)))
-                    newnode.heuristic = self.problem.domain.heuristic(newnode.state,self.problem.goal)
-
-                
+                # maybe calcular a heuristica do newnode aqui!!!
 
             self.open_nodes.extend(newnodes)
             #self.open_nodes.sort(key=lambda x: x.heuristic + x.cost)
-            """
 
         return None
 
@@ -124,10 +127,14 @@ class SearchTree:
             [piece_part in self.game for piece_part in piece.positions]
         )
 
-    
+    def collide_lateral(self, piece):
+        return any(
+            [piece_part in self._lateral for piece_part in piece.positions]
+        )
+
     # Verificar se existe algum bloco ocupado em baixo dele, o que significa que acabou e é uma das soluções
     def checkMoreActions(self,node):
-        for coords in node.coordinates:
+        for coords in node.shape.positions:
                 below_coords = [coords[0], coords[1]-1]
                 if (below_coords in self.game):
                     print("Open node!")
