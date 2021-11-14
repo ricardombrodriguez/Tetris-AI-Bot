@@ -18,6 +18,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
+        keys = []
 
         while True:
             try:
@@ -37,16 +38,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 elif new_piece is True:
 
                     current_shape = findShape(piece)
+                    print(current_shape)
                     t = SearchTree(state,current_shape)
                     t.search()
-                    solution = t.solution
+                    keys = t.solution.keys
+                    print(keys)
                     new_piece = False
 
                 # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
-                elif new_piece is False:
-
-                    key = solution.keys.pop(0)
-                    # operações para mudar a key
+                key = "s" if not keys else keys.pop(0)
 
                 #key = random.choice(["w","a","d"])
 
