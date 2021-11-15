@@ -218,13 +218,20 @@ class SearchTree:
     # DONE
     def checkHeight(self, node):
 
+        print("node", node.game)
         node.sum_height = 0
+        for x in range(1, self.x-1):
+            column_coords = []
+            for coord in node.game:
+                if coord[0] == x:
+                    column_coords.append(coord)
+            print("colum", column_coords)
+            node.sum_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
+            print("height", node.sum_height)
 
-        for x in range(0, self.x):
-            column_coords = [coord for coord in node.game if coord[0] == x]
-            node.sum_height += min(column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]
-        # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
+        print("final: ", node.sum_height)
+    #     # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
     """
     Como calcular o peso cumulativo dos buracos no jogo:
