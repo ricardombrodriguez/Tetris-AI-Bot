@@ -29,25 +29,45 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 # Peça recebida
                 piece = state['piece']
 
+
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
+                    print("PIECE IS NONE")
 
                     new_piece = True
+                    keys = None
 
-                # Encontrar a melhor solução para a nova peça
-                elif new_piece is True:
+                else:
 
-                    current_shape = findShape(piece)
-                    print(current_shape)
+                    key = None
 
-                    t = SearchTree(state,current_shape)
-                    t.search()
-                    keys = t.solution.keys
-                    print(keys)
-                    new_piece = False
+                    # Encontrar a melhor solução para a nova peça
+                    if new_piece is True:
 
-                # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
-                key = "s" if not keys else keys.pop(0)
+                        print("NEW PIECE....")
+                        current_shape = findShape(piece)
+                        t = SearchTree(state,current_shape)
+                        t.search()
+                        keys = t.solution.keys
+                        print("KEYS")
+                        print(keys)
+                        key = keys.pop(0)
+                        new_piece = False
+
+                    elif new_piece is False:
+
+                        print("SAME PIECE!")
+                        # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
+                        print("KEYSsssss")
+                        print(keys)
+                        if not keys:
+                            piece = None
+                            print("piece is set to NONE")
+                            key = "s"
+                        else:
+                            key = keys.pop(0)
+    
+
 
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
@@ -71,47 +91,68 @@ def searchKey():
 # ESTE MÉTODO N FUNCIONA PORQUE VARIAS SHAPES TEM A DIFERENÇA IGUAL, CORRIGIR ISTO AMANHÃ
 def findShape(piece):
 
-    S_piece = Shape(S)
-    piece_coords = []
-    piece_coords = [(coord[0] - 2, coord[1] - 1) for coord in piece]
-    if S_piece.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
-        return S_piece
+    #S (done)
+    if piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
+        return Shape(S)
 
-    Z_piece = Shape(Z)
-    piece_coords = []
-    piece_coords = [(coord[0] - 2, coord[1] - 1) for coord in piece]
-    if Z_piece.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
-        return Z_piece
+    elif piece[0][1] == piece[1][1] and piece[0][0] == piece[3][0] and piece[2][1] == piece[3][1]:
+        s = Shape(S)
+        s.rotate(1)
+        return s
 
-    I_piece = Shape(I)
-    piece_coords = []
-    piece_coords = [(coord[0] - 3, coord[1] - 1) for coord in piece]
-    if I_piece.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
-        return I_piece
+    #Z (dá erro)
+    elif piece[0][0] == piece[2][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
+        return Shape(Z)
 
-    O_piece = Shape(O)
-    piece_coords = []
-    piece_coords = [(coord[0] - 3, coord[1] - 1) for coord in piece]
-    if O_piece.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
-        return O_piece
+    elif piece[0][1] == piece[1][1] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
+        z = Shape(Z)
+        z.rotate(1)
+        return z
 
-    J_piece = Shape(J)
-    piece_coords = []
-    piece_coords = [(coord[0] - 3, coord[1] - 1) for coord in piece]
-    if J_piece.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
-        return J_piece
+    #I (done)
+    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][1] == piece[3][1]:
+        return Shape(I)
+   
+    elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][0] == piece[3][0]:
+        i = Shape(I)
+        i.rotate(1)
+        return i
 
-    T_piece = Shape(T)
-    piece_coords = []
-    piece_coords = [(coord[0] - 3, coord[1] - 1) for coord in piece]
-    if T_piece.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
-        return T_piece
+    #O (done)
+    elif piece[0][0] == piece[2][0] and piece[0][1] == piece[1][1] and piece[1][0] == piece[3][0] and piece[2][1] == piece[3][1]:
+        print("its O")
+        return Shape(O)
 
-    L_piece = Shape(L)
-    piece_coords = []
-    piece_coords = [(coord[0] - 2, coord[1] - 1) for coord in piece]
-    if L_piece.positions.sort(key=lambda coords: (coords[0], coords[1])) == piece_coords.sort(key=lambda coords: (coords[0], coords[1])):
-        return L_piece
+    #J (done acho)
+    elif piece[0][1] == piece[1][1] and piece[0][0] == piece[2][0] and piece[2][0] == piece[3][0]:
+        return Shape(J)
+
+    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
+        j = Shape(J)
+        j.rotate(1)
+        return j
+
+    #T (done acho)
+    elif piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
+        return Shape(T)
+
+    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
+        t = Shape(T)
+        t.rotate(1)
+        return t
+
+    #L
+    elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
+        return Shape(L)
+
+    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[0][0] == piece[3][0]:
+        l = Shape(L)
+        l.rotate(1)
+        return l
+
+    else:
+        print("n deu")
+
 
 
 
