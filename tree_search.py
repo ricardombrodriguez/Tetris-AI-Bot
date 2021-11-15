@@ -1,4 +1,4 @@
-actions = ["s","a","d","w"]
+
 
 """
 Nós de uma arvore de pesquisa (uma dos possíveis estados das coordenadas)
@@ -19,10 +19,11 @@ import sys
 
 class SearchNode:
 
-    def __init__(self,shape,score,keys):
+    def __init__(self,shape,score,keys,actions):
         self.shape = shape  # copia da instância do shape pai (tem coordenadas e isso tudo)
         self.score = score
         self.keys = keys
+        self.actions = actions
 
 
 
@@ -39,15 +40,10 @@ class SearchTree:
 
     # Construtor (recebe o parâmetro 'state' que tem toda a informação que precisamos para obter a melhor solução)
     def __init__(self, state, shape): 
+
         self.state = state
         self.game = state['game']
         self.coords = state['piece']  
-        self.shape = shape  
-        self.solution = None
-        root = SearchNode(shape, 0, [])
-        self.open_nodes = [root]
-        self.possible_solutions = []
-        print("INCIO DA SEARCH TREE")
 
         # Alterar isto depois, para receber o grid de alguma forma
         self.x = 10
@@ -57,16 +53,24 @@ class SearchTree:
         self._lateral.extend([(self.x - 1, i) for i in range(self.y)])  # right
         self.grid = self._bottom + self._lateral
 
+        self.shape = shape 
+        self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
+        self.solution = None
+        root = SearchNode(shape, 0, [], ["w","a","s","d"])
+        self.open_nodes = [root]
+        self.possible_solutions = []
+        print("INCIO DA SEARCH TREE")
+
     def search(self):
 
         numero_iteracoes = 0
+        last_nodes = 0
 
         while self.open_nodes != []:
 
             node = self.open_nodes.pop(0)
 
             numero_iteracoes += 1
-            print(numero_iteracoes)
 
             # check if valid and if's the last node
             valid = self.valid(node.shape)
@@ -96,14 +100,14 @@ class SearchTree:
                 # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
                 self.checkBumpiness(node)
 
-                # As 'keys' necessárias (em array) para chegar às coordenadas da solução
-                self.checkCost(node)
-
                 #Maybe uma formula para calcular heuristica
                 self.checkHeuristic(node)
 
                 self.possible_solutions.append(node)
 
+                last_nodes += 1
+
+                """
                 print(" ==== HEURISTICS ===")
                 print("SCORE")
                 print(node.score)
@@ -118,6 +122,7 @@ class SearchTree:
                 print(node.cost)
 
                 print("........")
+                """
 
 
             # Caso contrário, ainda dá para expandir este nó em mais possibilidades:
@@ -125,9 +130,12 @@ class SearchTree:
             node.shape.y += 1
 
             newnodes = []               #Novos nós que vão ser adicionados
-            for keypress in actions:
+            for keypress in node.actions:
             
-                newnode = SearchNode(deepcopy(node.shape),0,node.keys[:])  # criar um novo node para essa action
+                next_actions = [] if numero_iteracoes == 1 else node.actions[:]
+
+                newnode = SearchNode(deepcopy(node.shape), 0, node.keys[:], next_actions)  # criar um novo node para essa action
+                newnode.keys.append(keypress) 
 
                 # para cada ação possível, fazer as alterações
                     
@@ -135,21 +143,44 @@ class SearchTree:
                     while self.valid(newnode.shape):
                         newnode.shape.y +=1
                     newnode.shape.y -= 1
+                    # não é preciso definir o node.actions porque este vai ser nó terminal
+                    newnode.actions = []
+
                 elif keypress == "w":
                     newnode.shape.rotate()
                     if not self.valid(newnode.shape):
                         newnode.shape.rotate(-1)
+                    # quando se prime o "w", ou este volta a fazer um "w" se ainda não experimentou todas as rotações para essa coluna, ou, caso isso se verifique, ele prime o "s" e desc
+                    # se a peça já fez todos os numeros de rotação possiveis para essa coluna:
+                    w_counter = 0
+                    for key in newnode.keys:
+                        w_counter += 1 if key == "w" else 0
+                    if w_counter == len(self.shape.plan):
+                        newnode.actions = ["s"]
+                    else:
+                        newnode.actions = ["s","w"]
+
+
+
                 elif keypress == "a":
                     shift = -1
+                    # uma peça que tenha o "a" no newnode.keys, significa que é uma peça que só se pode movimentar para a direita
+                    # contudo, esta pode ter nas actions o "a" até colidir com uma parede, pode descer depois de virar à esquerda ou pode rodar depois de virar à esquerda
+                    newnode.actions = ["s","w","a"]
+
                 elif keypress == "d":
                     shift = +1
+                    # o mesmo que foi explicado no "a" mas para a direita
+                    newnode.actions = ["s","w","d"]
 
+                # se a peça bater num dos limites ou se n for valida, então não se adiciona esse nó aos newnodes, porque o node que preme o "s" já vai descer automaticamente e faz a mesma função
+                # do que a peça que colide na lateral e fica no mesmo lugar
                 if keypress in ["a", "d"]:
                     newnode.shape.translate(shift, 0)
                     if self.collide_lateral(newnode.shape):
-                        newnode.shape.translate(-shift, 0)
+                        continue
                     elif not self.valid(newnode.shape):
-                        newnode.shape.translate(-shift, 0)
+                        continue
 
                 newnodes.append(newnode)
 
@@ -163,6 +194,7 @@ class SearchTree:
         print("Numero de iterações: " + str(numero_iteracoes))
         # Calcular a solução com a melhor heuristica da self.possible_solutions
         self.solution = max(self.possible_solutions,key=lambda node: node.heuristic)
+        print(self.solution)
 
 
     # DONE
@@ -254,15 +286,11 @@ class SearchTree:
         # Nota: quanto maior a bumpiness, pior a solução
 
 
-    # DONE
-    def checkCost(self, node):
-        node.cost = len(node.keys)
-
 
     # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
     # A solução com a maior heuristica é a escolhida
     def checkHeuristic(self, node):
-        node.heuristic = 50 * node.score - 10 * (node.sum_height - node.hole_weight - node.bumpiness - node.cost)
+        node.heuristic = 1000 * node.score - 300 * node.sum_height - 150 * node.hole_weight - 30 * node.bumpiness
 
     def valid(self, piece):
         return not any(
