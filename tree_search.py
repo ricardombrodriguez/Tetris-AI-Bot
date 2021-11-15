@@ -190,11 +190,13 @@ class SearchTree:
             self.open_nodes.extend(newnodes)
             #self.open_nodes.sort(key=lambda node: node.heuristic)
 
+
         print("chegou ao final")
-        print("Numero de iterações: " + str(numero_iteracoes))
+        print("Numero de soluções: " + str(last_nodes))
         # Calcular a solução com a melhor heuristica da self.possible_solutions
-        self.solution = max(self.possible_solutions,key=lambda node: node.heuristic)
-        print(self.solution)
+        sorted_list = sorted(sorted(sorted(sorted(self.possible_solutions, key = lambda x : x.score, reverse = True), key = lambda x : x.sum_height),  key = lambda x : x.bumpiness), key = lambda x : x.bumpiness)
+        self.solution = sorted_list[0]
+        #print(self.solution)
 
 
     # DONE
