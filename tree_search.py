@@ -71,7 +71,7 @@ class SearchTree:
             # check if valid and if's the last node
             valid = self.valid(node.shape)
 
-            # nao cria nós "filhos" epassa para o proximo open node
+            # nao cria nós "filhos" e passa para o proximo open node
             if not valid:
                 continue
 

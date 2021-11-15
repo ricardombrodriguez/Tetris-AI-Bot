@@ -37,7 +37,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 elif new_piece is True:
 
                     current_shape = findShape(piece)
-                    t = SearchTree(state,current_shape)
+                    t = SearchTree(state, current_shape)
                     t.search()
                     solution = t.solution
                     new_piece = False
