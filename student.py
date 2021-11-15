@@ -49,20 +49,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         t = SearchTree(state,current_shape)
                         t.search()
                         keys = t.solution.keys
-                        print("KEYS")
-                        print(keys)
                         key = keys.pop(0)
                         new_piece = False
 
                     elif new_piece is False:
 
-                        print("SAME PIECE!")
                         # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
-                        print("KEYSsssss")
-                        print(keys)
                         if not keys:
                             piece = None
-                            print("piece is set to NONE")
                             key = "s"
                         else:
                             key = keys.pop(0)

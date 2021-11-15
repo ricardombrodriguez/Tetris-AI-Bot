@@ -88,6 +88,9 @@ class SearchTree:
                 # Guardar coordenadas onde a peça repousa e acrescentar ao grid para depois se poderem calcular as heuristicas
                 node.game = self.game + node.shape.positions
 
+                print("NODE_GAME:")
+                print(node.game)
+
                 # Guardar o score obtido pela colntocação dessa peça (ou linhas eliminadas)
                 self.checkScore(node)
 
@@ -194,9 +197,11 @@ class SearchTree:
         print("chegou ao final")
         print("Numero de soluções: " + str(last_nodes))
         # Calcular a solução com a melhor heuristica da self.possible_solutions
-        sorted_list = sorted(sorted(sorted(sorted(self.possible_solutions, key = lambda x : x.score, reverse = True), key = lambda x : x.sum_height),  key = lambda x : x.bumpiness), key = lambda x : x.bumpiness)
+        sorted_list = sorted(self.possible_solutions, key = lambda x : (-x.columns[0], x.columns[1], x.columns[2], x.columns[3]))
         self.solution = sorted_list[0]
-        #print(self.solution)
+        #self.solution = max(self.possible_solutions,key=lambda node: node.heuristic)
+        #print("best ", self.solution.heuristic)
+        #print("worst: ", min(self.possible_solutions,key=lambda node: node.heuristic).heuristic)
 
 
     # DONE
@@ -214,24 +219,25 @@ class SearchTree:
 
         node.score += lines ** 2
 
+        print("Score: ", node.score)
+
 
     # DONE
     def checkHeight(self, node):
 
-        print("node", node.game)
         node.sum_height = 0
+
+        # das colunas [1,8]
         for x in range(1, self.x-1):
             column_coords = []
             for coord in node.game:
                 if coord[0] == x:
                     column_coords.append(coord)
-            print("colum", column_coords)
             node.sum_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
-            print("height", node.sum_height)
 
+        print("Sum height: ", node.sum_height)
+        # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
-        print("final: ", node.sum_height)
-    #     # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
     """
     Como calcular o peso cumulativo dos buracos no jogo:
@@ -248,31 +254,36 @@ class SearchTree:
 
         hole_weight = 0
 
-        for x in range(0, self.x):
-            column_coords = [coord for coord in node.game if coord[0] == x]
-            height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]  # descobre o topo da coluna
+        for x in range(1, self.x-1):
+            column_coords = []
+            for coord in node.game:
+                if coord[0] == x:
+                    column_coords.append(coord)
+            height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
 
-            # verificar se está bloquado acima
-            severity = 1
+            # verificar se está bloqueado acima
+            severity = 3
             for y in range(height+1,self.y):
                 # espaço ocupado
                 if ((x,y) in column_coords):
-                    severity += 1
+                    severity += 3
                 # espaço vazio (é buraco)
                 else:
                     hole_weight += severity
 
+            severity = 1
             # verificar se tem, nas colunas adjacentes, blocos que estão ao seu lado
             for y in range(0,self.y):
                 # se é um bloco vazio / buraco, verificar se existem blocos ao seu lado esquerdo e ao lado direito
                 if not ((x,y) in column_coords):
                     # à esquerda
                     if (x-1,y) in node.game:
-                        hole_weight += 1
+                        hole_weight += severity
                     if (x+1,y) in node.game:
-                        hole_weight += 1
+                        hole_weight += severity
 
         node.hole_weight = hole_weight
+        print("Hole weight: ", node.hole_weight)
         #Nota: quanto maior a hole_weight, pior a solução
 
 
@@ -282,16 +293,23 @@ class SearchTree:
         node.bumpiness = 0
 
         # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
-        for x in range(0, self.x-1):
-            this_column_coords = [coord for coord in node.game if coord[0] == x]
-            this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]  # descobre o topo da coluna
+        for x in range(1, self.x-1):
+            this_column_coords = []
+            for coord in node.game:
+                if coord[0] == x:
+                    this_column_coords.append(coord)
+            this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
 
-            next_column_coords = [coord for coord in node.game if coord[0] == x+1]
-            next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y - 1))[1]  # descobre o topo da coluna
+            next_column_coords = []
+            for coord in node.game:
+                if coord[0] == x + 1:
+                    next_column_coords.append(coord)
+            next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
 
             absolute_difference = abs(next_height - this_height)
             node.bumpiness += absolute_difference
 
+        print("Bumpiness: ", node.bumpiness)
         # Nota: quanto maior a bumpiness, pior a solução
 
 
@@ -299,7 +317,10 @@ class SearchTree:
     # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
     # A solução com a maior heuristica é a escolhida
     def checkHeuristic(self, node):
-        node.heuristic = 1000 * node.score - 300 * node.sum_height - 150 * node.hole_weight - 30 * node.bumpiness
+        node.heuristic = 100000 * node.score - 100 * node.sum_height - 10 * node.hole_weight - 200 * node.bumpiness
+        node.columns = [node.score, node.bumpiness, node.sum_height, node.hole_weight]
+        print("HEURISTICS: ", node.heuristic)
+        print(" ========= ")
 
     def valid(self, piece):
         return not any(
