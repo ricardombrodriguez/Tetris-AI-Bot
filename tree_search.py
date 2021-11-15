@@ -105,9 +105,7 @@ class SearchTree:
 
                 self.possible_solutions.append(node)
 
-                print("LAST_NODE")
                 last_nodes += 1
-                print("last_nodes: " + str(last_nodes))
 
                 """
                 print(" ==== HEURISTICS ===")
@@ -293,7 +291,7 @@ class SearchTree:
     # A solução com a maior heuristica é a escolhida
     def checkHeuristic(self, node):
         node.heuristic = 1000 * node.score - 300 * node.sum_height - 150 * node.hole_weight - 30 * node.bumpiness
-        
+
     def valid(self, piece):
         return not any(
             [piece_part in self.grid for piece_part in piece.positions]
