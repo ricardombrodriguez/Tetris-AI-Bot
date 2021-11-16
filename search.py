@@ -28,6 +28,7 @@ class Search:
         self.shape = shape 
         self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
         self.possible_solutions = []
+        self.candidates = []
         self.best_solution = None
 
         print("[SEARCH] Search inicializada")
@@ -44,8 +45,6 @@ class Search:
 
             step = i
 
-            print(step)
-
             solution = Solution(deepcopy(self.shape))
 
             solution.shape.rotate(step)
@@ -54,7 +53,6 @@ class Search:
 
             # para calcular o numero de keys para chegar a uma determinada coluna
             min_x = min(self.shape.positions, key=lambda coords: coords[0])[0]
-            print("min x ", min_x)
 
             # percorrer colunas [1,8]
             for x in range(1, self.x-1):
@@ -75,24 +73,82 @@ class Search:
                 # depois de obter as keys, a ultima é sempre o "s"
                 solution.keys += ["s"]
 
-                print("SOLUTION KEYS")
-                print(solution.keys)
-
                 self.possible_solutions.append(solution)
 
-        # AGORA, DEPOIS DE ADICIONAR TODAS AS SOLUTIONS ÀS POSSIBLE_SOLUTIONS, PODEMOS PERCORRER A LISTA DE KEYS DE CADA SOLUÇÃO
-        # SIMULAR O JOGO COM ESSAS KEYS E CALCULAR HEURISTICAS
         print("num de possiveis solutions")
         print(len(self.possible_solutions))
 
-        """
-        # check if valid
-        valid = self.valid(solution.shape)
+        # AGORA, DEPOIS DE ADICIONAR TODAS AS SOLUTIONS ÀS POSSIBLE_SOLUTIONS, PODEMOS PERCORRER A LISTA DE KEYS DE CADA SOLUÇÃO
+        # SIMULAR O JOGO COM ESSAS KEYS E CALCULAR HEURISTICAS
+        for solution in self.possible_solutions:
 
-        # nao cria nós "filhos" e passa para o proximo open node
-        if not valid:
-            continue
-        """
+            keys = solution.keys
+
+            # obter a shape com o estado inicial
+            solution = Solution(deepcopy(self.shape))
+
+            # guardar as keys para chegar ao estado especifico dessa solução
+            solution.keys = keys
+
+            # enquanto há keys para serem premidas
+            while not keys:
+
+                key = keys.pop(0)
+                    
+                if key == "s":
+
+                    while self.valid(solution.shape):
+                        solution.shape.y +=1
+                    solution.shape.y -= 1
+
+                elif key == "w":
+                    solution.shape.rotate()
+                    if not self.valid(solution.shape):
+                        solution.shape.rotate(-1)
+
+                elif key == "a":
+                    shift = -1
+
+                elif key == "d":
+                    shift = +1
+
+                if key in ["a", "d"]:
+                    solution.shape.translate(shift, 0)
+                    if self.collide_lateral(solution.shape):
+                        continue
+                    elif not self.valid(solution.shape):
+                        continue
+
+
+            # agora a peça já está repousada
+
+            solution.game = self.game + solution.shape.positions
+
+            # Pontuação ganha
+            self.checkScore(solution)
+
+            # A altura média do jogo depois de colocar essa peças
+            self.checkHeight(solution)
+
+            # A pontuação do peso dos buracos depois da solução
+            self.checkHoleWeight(solution)
+
+            # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
+            self.checkBumpiness(solution)
+
+            self.checkLowestSolution(solution)
+
+            #Maybe uma formula para calcular heuristica
+            self.checkHeuristic(solution)
+
+            self.candidates.append(solution)
+
+        print("chegou ao final")
+
+        #  node.columns = [node.score, node.bumpiness, node.sum_height, node.hole_weight]
+        #sorted_list = sorted(self.candidates, key = lambda x : (x.columns[2], x.columns[3]))
+        #self.solution = sorted_list[-1]
+        self.solution = min(self.candidates, key=lambda solution: solution.heuristic)
 
 
 
@@ -109,6 +165,7 @@ class Search:
     # DONE
     def checkScore(self, solution):
         
+        solution.score = 0
         lines = 0
 
         for item, count in Counter(y for _, y in solution.game).most_common():
@@ -123,17 +180,17 @@ class Search:
 
 
     # DONE
-    def checkHeight(self, node):
+    def checkHeight(self, solution):
 
-        node.sum_height = 0
+        solution.sum_height = 0
 
         # das colunas [1,8]
         for x in range(1, self.x-1):
             column_coords = []
-            for coord in node.game:
+            for coord in solution.game:
                 if coord[0] == x:
                     column_coords.append(coord)
-            node.sum_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
+            solution.sum_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
 
         # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
@@ -148,14 +205,14 @@ class Search:
     """
 
     # DONE
-    def checkHoleWeight(self, node):
+    def checkHoleWeight(self, solution):
         # Para cada coluna, verificar as heuristicas descritas acima ^^
 
         hole_weight = 0
 
         for x in range(1, self.x-1):
             column_coords = []
-            for coord in node.game:
+            for coord in solution.game:
                 if coord[0] == x:
                     column_coords.append(coord)
             height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
@@ -176,52 +233,52 @@ class Search:
                 # se é um bloco vazio / buraco, verificar se existem blocos ao seu lado esquerdo e ao lado direito
                 if not ((x,y) in column_coords):
                     # à esquerda
-                    if (x-1,y) in node.game:
+                    if (x-1,y) in solution.game:
                         hole_weight += severity
-                    if (x+1,y) in node.game:
+                    if (x+1,y) in solution.game:
                         hole_weight += severity
 
-        node.hole_weight = hole_weight
+        solution.hole_weight = hole_weight
         #Nota: quanto maior a hole_weight, pior a solução
 
 
     # DONE
-    def checkBumpiness(self, node):
+    def checkBumpiness(self, solution):
 
-        node.bumpiness = 0
+        solution.bumpiness = 0
 
         # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
         for x in range(1, self.x-1):
             this_column_coords = []
-            for coord in node.game:
+            for coord in solution.game:
                 if coord[0] == x:
                     this_column_coords.append(coord)
             this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
 
             next_column_coords = []
-            for coord in node.game:
+            for coord in solution.game:
                 if coord[0] == x + 1:
                     next_column_coords.append(coord)
             next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
 
             absolute_difference = abs(next_height - this_height)
-            node.bumpiness += absolute_difference
+            solution.bumpiness += absolute_difference
         # Nota: quanto maior a bumpiness, pior a solução
 
 
     # Verifica o quão baixo a peça vai ficar
-    def checkLowestSolution(self, node):
-        node.average_height = 0
-        for coord in node.shape.positions:
-            node.average_height += (self.y - coord[1])
-        node.average_height /= len(node.shape.positions)
+    def checkLowestSolution(self, solution):
+        solution.average_height = 0
+        for coord in solution.shape.positions:
+            solution.average_height += (self.y - coord[1])
+        solution.average_height /= len(solution.shape.positions)
 
 
     # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
     # A solução com a maior heuristica é a escolhida
-    def checkHeuristic(self, node):
-        node.heuristic = 100000 * node.score - 100 * node.sum_height - 10 * node.hole_weight - 200 * node.bumpiness
-        node.columns = [node.score, node.bumpiness, node.sum_height, node.hole_weight]
+    def checkHeuristic(self, solution):
+        solution.heuristic = 100000 * solution.score - 100 * solution.sum_height - 10 * solution.hole_weight - 200 * solution.bumpiness
+        solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight]
 
     def valid(self, piece):
         return not any(
@@ -234,13 +291,3 @@ class Search:
         return any(
             [piece_part in self._lateral for piece_part in piece.positions]
         )
-
-    # Verificar se existe algum bloco ocupado em baixo dele, o que significa que acabou e é uma das soluções
-    def isLastNode(self,node):
-        for coords in node.shape.positions:
-            below_coords = (coords[0], coords[1]+1)
-            #ver se bate na grid também
-            if (below_coords in self.game or below_coords in self.grid):
-                self.possible_solutions.append(node)
-                return True
-        return False

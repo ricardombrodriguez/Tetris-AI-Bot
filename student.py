@@ -54,6 +54,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         s = Search(state,current_shape)
                         s.search()
+                        keys = s.solution.keys
 
                         key = keys.pop(0)
                         new_piece = False
