@@ -167,7 +167,7 @@ class Search:
 
 
         # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
-        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.sum_height, x.hole_weight, x.bumpiness))
+        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height))
         self.solution = s[0]
 
         print(" ===== SOLUTION =====")
