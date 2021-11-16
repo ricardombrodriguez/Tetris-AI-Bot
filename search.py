@@ -71,12 +71,9 @@ class Search:
                     solution.keys += ["d"]*abs(x_differential)
 
                 # depois de obter as keys, a ultima é sempre o "s"
-                solution.keys += ["s"]
+                solution.keys += ["s","s"]
 
                 self.possible_solutions.append(solution)
-
-        print("num de possiveis solutions")
-        print(len(self.possible_solutions))
 
         # AGORA, DEPOIS DE ADICIONAR TODAS AS SOLUTIONS ÀS POSSIBLE_SOLUTIONS, PODEMOS PERCORRER A LISTA DE KEYS DE CADA SOLUÇÃO
         # SIMULAR O JOGO COM ESSAS KEYS E CALCULAR HEURISTICAS
@@ -91,6 +88,7 @@ class Search:
             solution.keys = keys
 
             # enquanto há keys para serem premidas
+            valid = True
             while not keys:
 
                 key = keys.pop(0)
@@ -115,8 +113,10 @@ class Search:
                 if key in ["a", "d"]:
                     solution.shape.translate(shift, 0)
                     if self.collide_lateral(solution.shape):
+                        valid = False
                         continue
                     elif not self.valid(solution.shape):
+                        valid = False
                         continue
 
 
@@ -141,14 +141,22 @@ class Search:
             #Maybe uma formula para calcular heuristica
             self.checkHeuristic(solution)
 
-            self.candidates.append(solution)
+            if valid:
+                self.candidates.append(solution)
+
+        print("num de candidatos")
+        print(len(self.candidates))
 
         print("chegou ao final")
 
         #  node.columns = [node.score, node.bumpiness, node.sum_height, node.hole_weight]
-        #sorted_list = sorted(self.candidates, key = lambda x : (x.columns[2], x.columns[3]))
-        #self.solution = sorted_list[-1]
-        self.solution = min(self.candidates, key=lambda solution: solution.heuristic)
+        
+        sorted_list = sorted(self.candidates, key = lambda x : (-x.columns[0], x.columns[1], x.columns[2], x.columns[3]))
+        equal_winners = []
+        for solution in sorted_list:
+            if solution.heuristic == sorted_list[0].heuristic:
+                equal_winners.append(solution)
+        self.solution = random.choice(equal_winners)
 
 
 

@@ -55,6 +55,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         s = Search(state,current_shape)
                         s.search()
                         keys = s.solution.keys
+                        print(keys)
 
                         key = keys.pop(0)
                         new_piece = False
@@ -64,7 +65,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
                         if not keys:
                             piece = None
-                            key = "a"
                             print("new piece is false and not keys!")
                         else:
                             key = keys.pop(0)
