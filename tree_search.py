@@ -103,6 +103,8 @@ class SearchTree:
                 # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
                 self.checkBumpiness(node)
 
+                self.checkLowestSolution(node)
+
                 #Maybe uma formula para calcular heuristica
                 self.checkHeuristic(node)
 
@@ -195,12 +197,16 @@ class SearchTree:
 
 
         print("chegou ao final")
-        print("Numero de soluções: " + str(last_nodes))
         # Calcular a solução com a melhor heuristica da self.possible_solutions
-        sorted_list = sorted(self.possible_solutions, key = lambda x : (-x.columns[0], x.columns[1], x.columns[2], x.columns[3]))
-        self.solution = sorted_list[0]
-        #self.solution = max(self.possible_solutions,key=lambda node: node.heuristic)
-        #print("best ", self.solution.heuristic)
+        #sorted_list = sorted(self.possible_solutions, key = lambda x : (-x.columns[0], x.columns[1], x.columns[2], x.columns[3]))
+        #self.solution = sorted_list[0]
+        self.solution = min(self.possible_solutions,key=lambda node: node.heuristic)
+        print("best:  ", self.solution.heuristic)
+        print("score:  ", self.solution.score)
+        print("avg height:  ", self.solution.average_height)
+        print("bumpiness:  ", self.solution.bumpiness)
+        print("hole_weight:  ", self.solution.hole_weight)
+        print("==============================================================")
         #print("worst: ", min(self.possible_solutions,key=lambda node: node.heuristic).heuristic)
 
 
@@ -219,8 +225,6 @@ class SearchTree:
 
         node.score += lines ** 2
 
-        print("Score: ", node.score)
-
 
     # DONE
     def checkHeight(self, node):
@@ -235,7 +239,6 @@ class SearchTree:
                     column_coords.append(coord)
             node.sum_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
 
-        print("Sum height: ", node.sum_height)
         # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
 
@@ -283,7 +286,6 @@ class SearchTree:
                         hole_weight += severity
 
         node.hole_weight = hole_weight
-        print("Hole weight: ", node.hole_weight)
         #Nota: quanto maior a hole_weight, pior a solução
 
 
@@ -308,10 +310,15 @@ class SearchTree:
 
             absolute_difference = abs(next_height - this_height)
             node.bumpiness += absolute_difference
-
-        print("Bumpiness: ", node.bumpiness)
         # Nota: quanto maior a bumpiness, pior a solução
 
+
+    # Verifica o quão baixo a peça vai ficar
+    def checkLowestSolution(self, node):
+        node.average_height = 0
+        for coord in node.shape.positions:
+            node.average_height += (self.y - coord[1])
+        node.average_height /= len(node.shape.positions)
 
 
     # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
@@ -319,8 +326,6 @@ class SearchTree:
     def checkHeuristic(self, node):
         node.heuristic = 100000 * node.score - 100 * node.sum_height - 10 * node.hole_weight - 200 * node.bumpiness
         node.columns = [node.score, node.bumpiness, node.sum_height, node.hole_weight]
-        print("HEURISTICS: ", node.heuristic)
-        print(" ========= ")
 
     def valid(self, piece):
         return not any(

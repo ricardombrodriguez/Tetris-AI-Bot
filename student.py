@@ -6,6 +6,7 @@ import os
 import websockets
 from shape import S, Z, I, O, J, T, L, Shape
 from tree_search import *
+from search import *
 import random
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
@@ -20,52 +21,43 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
         keys = []
 
+        iteracao = 1
+
         while True:
             try:
                 state = json.loads(
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
+                if len(keys) > 0:
+                    await websocket.send(
+                        json.dumps({"cmd": "key", "key": keys.pop(0)})
+                    )
+
                 # Peça recebida
                 piece = state['piece']
-
 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
                     print("PIECE IS NONE")
 
                     new_piece = True
-                    keys = None
+                    iteracao += 1
 
                 else:
-
-                    key = None
 
                     # Encontrar a melhor solução para a nova peça
                     if new_piece is True:
 
                         print("NEW PIECE....")
+                        print("ITERAÇÃO: ", iteracao)
                         current_shape = findShape(piece)
-                        t = SearchTree(state,current_shape)
-                        t.search()
-                        keys = t.solution.keys
-                        key = keys.pop(0)
+
+                        s = Search(state,current_shape)
+                        s.search()
+                        keys = s.solution.keys
+
                         new_piece = False
-
-                    elif new_piece is False:
-
-                        # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
-                        if not keys:
-                            piece = None
-                            key = "s"
-                        else:
-                            key = keys.pop(0)
-    
-
-
-                await websocket.send(
-                    json.dumps({"cmd": "key", "key": key})
-                )  # send key command to server - you must implement this send in the AI agent
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
