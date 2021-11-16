@@ -29,6 +29,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
+                if len(keys) > 0:
+                    await websocket.send(
+                        json.dumps({"cmd": "key", "key": keys.pop(0)})
+                    )
+
                 # Peça recebida
                 piece = state['piece']
 
@@ -37,12 +42,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     print("PIECE IS NONE")
 
                     new_piece = True
-                    keys = None
                     iteracao += 1
 
                 else:
-
-                    key = None
 
                     # Encontrar a melhor solução para a nova peça
                     if new_piece is True:
@@ -51,28 +53,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         print("ITERAÇÃO: ", iteracao)
                         current_shape = findShape(piece)
 
-                        #t = SearchTree(state,current_shape)
-                        #t.search()
-                        #keys = t.solution.keys
-
                         s = Search(state,current_shape)
                         s.search()
                         keys = s.solution.keys
 
-                        key = keys.pop(0)
                         new_piece = False
-
-                    elif new_piece is False:
-
-                        # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
-                        if not keys:
-                            key = "s"
-                        else:
-                            key = keys.pop(0)
-    
-                await websocket.send(
-                    json.dumps({"cmd": "key", "key": key})
-                )  # send key command to server - you must implement this send in the AI agent
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")

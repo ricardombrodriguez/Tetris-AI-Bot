@@ -10,12 +10,17 @@ class Solution:
         self.shape = shape
         self.keys = []
 
+
 class Search:
 
     def __init__(self, state, shape): 
 
         self.state = state
-        self.game = state['game']
+        self.game = []
+        for tup in state['game']:
+            self.game.append((tup[0], tup[1]))
+        print("self.game")
+        print(self.game)
         self.coords = state['piece']  
 
         self.x = 10
@@ -38,6 +43,9 @@ class Search:
 
         print("posições do shape")
         print(self.shape)
+        print("POSIÇÕES DO GAME")
+        print(self.game)
+        print("=====")
 
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
@@ -93,19 +101,19 @@ class Search:
 
                 solution.shape.y += 1
 
-                if self.valid(solution.shape):
+                if self.valid(solution):
 
                     key = keys.pop(0)
 
                     if key == "s":
 
-                        while self.valid(solution.shape):
+                        while self.valid(solution):
                             solution.shape.y +=1
                         solution.shape.y -= 1
 
                     elif key == "w":
                         solution.shape.rotate()
-                        if not self.valid(solution.shape):
+                        if not self.valid(solution):
                             solution.shape.rotate(-1)
 
                     elif key == "a":
@@ -119,7 +127,7 @@ class Search:
                         if self.collide_lateral(solution.shape):
                             valid = False
                             break
-                        elif not self.valid(solution.shape):
+                        elif not self.valid(solution):
                             valid = False
                             break
 
@@ -128,30 +136,26 @@ class Search:
 
             # agora a peça já está repousada
 
+            if valid:
+                solution.game = deepcopy(self.game)
+                self.valid_solutions.append(solution)
 
-            solution.game = self.game
-            for tup in solution.shape.positions:
-                solution.game.append([tup[0], tup[1]])
+
+        for valid_solution in self.valid_solutions:
 
             # Pontuação ganha
-            self.checkScore(solution)
+            self.checkScore(valid_solution)
 
             # A altura média do jogo depois de colocar essa peças
-            self.checkHeight(solution)
+            self.checkHeight(valid_solution)
 
             # A pontuação do peso dos buracos depois da solução
-            self.checkHoleWeight(solution)
+            self.checkHoleWeight(valid_solution)
 
             # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
-            self.checkBumpiness(solution)
+            self.checkBumpiness(valid_solution)
 
-            self.checkLowestSolution(solution)
-
-            #Maybe uma formula para calcular heuristica
-            self.checkHeuristic(solution)
-
-            if valid:
-                self.valid_solutions.append(solution)
+            self.checkLowestSolution(valid_solution)
 
 
         print("chegou ao final")
@@ -164,6 +168,7 @@ class Search:
         #    if solution.heuristic == sorted_list[0].heuristic:
         #        equal_winners.append(solution)
 
+        #s = sorted(self.valid_solutions, key = lambda x: (-x[0], x[4], x[1], x[2], x[3]))
         self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
         print(" ===== SOLUTION =====")
         print(self.solution.shape.positions)
@@ -287,18 +292,13 @@ class Search:
         solution.average_height /= len(solution.shape.positions)
 
 
-    # Podemos usar uma formula que combina todas as heuristicas com um determinado peso (ex: score vale 50%, height vale 10%, etc...)
-    # A solução com a maior heuristica é a escolhida
-    def checkHeuristic(self, solution):
-        solution.heuristic = 100000 * solution.score - 100 * solution.sum_height - 10 * solution.hole_weight - 200 * solution.bumpiness
-        solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
 
 
-    def valid(self, piece):
+    def valid(self, solution):
         return not any(
-            [piece_part in self.grid for piece_part in piece.positions]
+            [piece_part in self.grid for piece_part in solution.shape.positions]
         ) and not any(
-            [piece_part in self.game for piece_part in piece.positions]
+            [piece_part in self.game for piece_part in solution.shape.positions]
         )
 
     def collide_lateral(self, piece):
