@@ -11,7 +11,12 @@ logger = logging.getLogger("Game")
 logger.setLevel(logging.DEBUG)
 
 GAME_SPEED = 10
+<<<<<<< HEAD
 SPEED_STEP = 10 #points
+=======
+SPEED_STEP = 10  # points
+
+>>>>>>> upstream/main
 
 class Game:
     def __init__(self, x=10, y=30) -> None:
@@ -36,21 +41,38 @@ class Game:
 
     def info(self):
         return {
+<<<<<<< HEAD
             "grid": self.grid,
             "piece": self.current_piece.positions if self.current_piece else None,
             "next_pieces": [n.positions for n in self.next_pieces],
             "game_speed": self.game_speed
+=======
+            "dimensions": self.dimensions,
+            "grid": self.grid,
+            "game_speed": self.game_speed,
+            "score": self.score
+>>>>>>> upstream/main
         }
 
     def clear_rows(self):
         lines = 0
 
+<<<<<<< HEAD
         for item, count in Counter(y for _, y in self.game).most_common():
             if count == len(self._bottom) - 2:
                 self.game = [(x, y) for (x, y) in self.game if y != item]  # remove row
                 self.game = [
                     (x, y + 1) if y < item else (x, y) for (x, y) in self.game
                 ]  # drop blocks above
+=======
+        for item, count in sorted(Counter(y for _, y in self.game).most_common()):
+            if count == len(self._bottom) - 2:
+                self.game = [
+                    (x, y + 1) if y < item else (x, y)
+                    for (x, y) in self.game
+                    if y != item
+                ]  # remove row and drop lines
+>>>>>>> upstream/main
                 lines += 1
                 logger.debug("Clear line %s", item)
 
@@ -58,6 +80,14 @@ class Game:
 
         self.game_speed = GAME_SPEED + self.score // SPEED_STEP
 
+<<<<<<< HEAD
+=======
+        most_common = Counter(y for _, y in self.game).most_common(1)
+        if most_common != []:
+            (_, count) = most_common[0]
+            assert count != len(self._bottom) - 2, f"please create an issue https://github.com/dgomes/ia-tetris/issues sharing:\n {self.game}"
+
+>>>>>>> upstream/main
     def keypress(self, key):
         """Update locally last key pressed."""
         self._lastkeypress = key
@@ -73,8 +103,12 @@ class Game:
             self.current_piece.set_pos(
                 (self.dimensions.x - self.current_piece.dimensions.x) / 2, 0
             )
+<<<<<<< HEAD
             logger.debug("Piece initial pos: %s", self.current_piece)   #for debugging
             if not self.valid(self.current_piece): 
+=======
+            if not self.valid(self.current_piece):
+>>>>>>> upstream/main
                 logger.info("GAME OVER")
                 self.running = False
 
@@ -83,7 +117,11 @@ class Game:
         if self.valid(self.current_piece):
             if self._lastkeypress == "s":
                 while self.valid(self.current_piece):
+<<<<<<< HEAD
                     self.current_piece.y +=1
+=======
+                    self.current_piece.y += 1
+>>>>>>> upstream/main
                 self.current_piece.y -= 1
             elif self._lastkeypress == "w":
                 self.current_piece.rotate()
@@ -100,7 +138,11 @@ class Game:
                     logger.debug("Hitting the wall")
                     self.current_piece.translate(-shift, 0)
                 elif not self.valid(self.current_piece):
+<<<<<<< HEAD
                     self.current_piece.translate(-shift, 0) 
+=======
+                    self.current_piece.translate(-shift, 0)
+>>>>>>> upstream/main
 
         else:
             self.current_piece.y -= 1
@@ -116,12 +158,18 @@ class Game:
             "game": self.game,
             "piece": self.current_piece.positions if self.current_piece else None,
             "next_pieces": [n.positions for n in self.next_pieces],
+<<<<<<< HEAD
             "game_speed": self.game_speed
+=======
+            "game_speed": self.game_speed,
+            "score": self.score,
+>>>>>>> upstream/main
         }
 
     def valid(self, piece):
         return not any(
             [piece_part in self.grid for piece_part in piece.positions]
+<<<<<<< HEAD
         ) and not any(
             [piece_part in self.game for piece_part in piece.positions]
         )
@@ -130,3 +178,9 @@ class Game:
         return any(
             [piece_part in self._lateral for piece_part in piece.positions]
         )
+=======
+        ) and not any([piece_part in self.game for piece_part in piece.positions])
+
+    def collide_lateral(self, piece):
+        return any([piece_part in self._lateral for piece_part in piece.positions])
+>>>>>>> upstream/main
