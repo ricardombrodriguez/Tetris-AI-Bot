@@ -21,13 +21,12 @@ class Search:
             self.game.append((tup[0], tup[1]))
         self.coords = state['piece']  
 
-        self.x = initial_info['dimensions'][0]
-        self.y = initial_info['dimensions'][1]
-        self.grid = initial_info['grid']
-        print(self.grid)
+        self.grid = []
+        for coord in initial_info['grid']:
+           self.grid.append((coord[0], coord[1]))
 
-        self._lateral = [(0, i) for i in range(self.y)]  # left
-        self._lateral.extend([(self.x - 1, i) for i in range(self.y)])  # right
+        self.x = 10
+        self.y = 30
 
         self.shape = shape 
         self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
@@ -39,12 +38,6 @@ class Search:
 
 
     def search(self):
-
-        print("posições do shape")
-        print(self.shape)
-        print("POSIÇÕES DO GAME")
-        print(self.game)
-        print("=====")
 
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
@@ -100,10 +93,7 @@ class Search:
 
                 solution.shape.y += 1
 
-                print("entrou1")
-
                 if self.valid(solution):
-                    print("entrou2")
 
                     key = keys.pop(0)
 
@@ -139,7 +129,7 @@ class Search:
                 solution.game = deepcopy(self.game)
                 self.valid_solutions.append(solution)
 
-        print("IIII")
+
         for valid_solution in self.valid_solutions:
 
             # Pontuação ganha
@@ -160,15 +150,11 @@ class Search:
         print("chegou ao final")
 
         #  solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
+    
 
         # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
-        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height))
+        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.sum_height, x.hole_weight, x.bumpiness))
         self.solution = s[0]
-
-        print(" ===== SOLUTION =====")
-        print(self.solution.shape.positions)
-        print("AVG HEIGHT: ", self.solution.average_height)
-        print(self.solution.keys)
 
 
 
@@ -210,7 +196,6 @@ class Search:
 
     """
     Como calcular o peso cumulativo dos buracos no jogo:
-
     Uma célula/bloco vazio do jogo é um buraco quando:
     - Está bloqueada, no seu topo, por um bloco ocupado ou por um buraco (uma célula vazia que também tem um bloco ocupado em cima dele)
     - Está a uma altura menor ou igual da maior altura da coluna adjacente (seja esta a coluna da esquerda ou da direita)
