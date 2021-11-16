@@ -25,11 +25,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
         while True:
             try:
+
                 state = json.loads(
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
-                if keys:
+                if len(keys) > 0:
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
@@ -39,7 +40,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
-                    print("PIECE IS NONE")
 
                     new_piece = True
                     iteracao += 1
@@ -49,8 +49,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     # Encontrar a melhor solução para a nova peça
                     if new_piece is True:
 
-                        print("NEW PIECE....")
-                        print("ITERAÇÃO: ", iteracao)
                         current_shape = findShape(piece)
 
                         s = Search(state,current_shape)
