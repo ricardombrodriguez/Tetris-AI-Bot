@@ -28,7 +28,7 @@ class Search:
         self.shape = shape 
         self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
         self.possible_solutions = []
-        self.candidates = []
+        self.valid_solutions = []
         self.best_solution = None
 
         print("[SEARCH] Search inicializada")
@@ -45,11 +45,11 @@ class Search:
 
             step = i
 
-            solution = Solution(deepcopy(self.shape))
+            original = Solution(deepcopy(self.shape))
 
-            solution.shape.rotate(step)
+            original.shape.rotate(step)
 
-            solution.keys = ["w"]*step
+            #original.keys = ["w"]*step
 
             # para calcular o numero de keys para chegar a uma determinada coluna
             min_x = min(self.shape.positions, key=lambda coords: coords[0])[0]
@@ -58,7 +58,7 @@ class Search:
             for x in range(1, self.x-1):
 
                 # nova instância para cada solução numa coluna duma rotação específica
-                solution = Solution(deepcopy(solution))
+                solution = Solution(deepcopy(original))
 
                 # diferença entre a coluna atual e o min_x, para depois saber se ele vai para a esquerda, fica no meio ou vai para a direita
                 x_differential = x - min_x
@@ -71,58 +71,67 @@ class Search:
                     solution.keys += ["d"]*abs(x_differential)
 
                 # depois de obter as keys, a ultima é sempre o "s"
-                solution.keys += ["s","s"]
+                solution.keys += ["s"]
 
                 self.possible_solutions.append(solution)
 
         # AGORA, DEPOIS DE ADICIONAR TODAS AS SOLUTIONS ÀS POSSIBLE_SOLUTIONS, PODEMOS PERCORRER A LISTA DE KEYS DE CADA SOLUÇÃO
         # SIMULAR O JOGO COM ESSAS KEYS E CALCULAR HEURISTICAS
-        for solution in self.possible_solutions:
+        for sol in self.possible_solutions:
 
-            keys = solution.keys
+            keys = deepcopy(sol.keys)
 
             # obter a shape com o estado inicial
             solution = Solution(deepcopy(self.shape))
 
             # guardar as keys para chegar ao estado especifico dessa solução
-            solution.keys = keys
+            solution.keys = deepcopy(keys)
 
             # enquanto há keys para serem premidas
             valid = True
-            while not keys:
+            while True:
 
-                key = keys.pop(0)
-                    
-                if key == "s":
+                solution.shape.y += 1
 
-                    while self.valid(solution.shape):
-                        solution.shape.y +=1
-                    solution.shape.y -= 1
+                if self.valid(solution.shape):
 
-                elif key == "w":
-                    solution.shape.rotate()
-                    if not self.valid(solution.shape):
-                        solution.shape.rotate(-1)
+                    key = keys.pop(0)
 
-                elif key == "a":
-                    shift = -1
+                    if key == "s":
 
-                elif key == "d":
-                    shift = +1
+                        while self.valid(solution.shape):
+                            solution.shape.y +=1
+                        solution.shape.y -= 1
 
-                if key in ["a", "d"]:
-                    solution.shape.translate(shift, 0)
-                    if self.collide_lateral(solution.shape):
-                        valid = False
-                        continue
-                    elif not self.valid(solution.shape):
-                        valid = False
-                        continue
+                    elif key == "w":
+                        solution.shape.rotate()
+                        if not self.valid(solution.shape):
+                            solution.shape.rotate(-1)
 
+                    elif key == "a":
+                        shift = -1
+
+                    elif key == "d":
+                        shift = +1
+
+                    if key in ["a", "d"]:
+                        solution.shape.translate(shift, 0)
+                        if self.collide_lateral(solution.shape):
+                            valid = False
+                            break
+                        elif not self.valid(solution.shape):
+                            valid = False
+                            break
+
+                    if not keys:
+                        break
 
             # agora a peça já está repousada
 
-            solution.game = self.game + solution.shape.positions
+
+            solution.game = self.game
+            for tup in solution.shape.positions:
+                solution.game.append([tup[0], tup[1]])
 
             # Pontuação ganha
             self.checkScore(solution)
@@ -142,28 +151,24 @@ class Search:
             self.checkHeuristic(solution)
 
             if valid:
-                self.candidates.append(solution)
+                self.valid_solutions.append(solution)
 
-        print("num de candidatos")
-        print(len(self.candidates))
 
         print("chegou ao final")
 
-        #  node.columns = [node.score, node.bumpiness, node.sum_height, node.hole_weight]
+        #  solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
         
-        sorted_list = sorted(self.candidates, key = lambda x : (-x.columns[0], x.columns[1], x.columns[2], x.columns[3]))
-        equal_winners = []
-        for solution in sorted_list:
-            if solution.heuristic == sorted_list[0].heuristic:
-                equal_winners.append(solution)
-        self.solution = random.choice(equal_winners)
+        #sorted_list = min(self.candidates, key = lambda x : x.average_height)
+        #equal_winners = []
+        #for solution in sorted_list:
+        #    if solution.heuristic == sorted_list[0].heuristic:
+        #        equal_winners.append(solution)
 
-
-
-
-
-
-
+        self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
+        print(" ===== SOLUTION =====")
+        print(self.solution.shape.positions)
+        print("AVG HEIGHT: ", self.solution.average_height)
+        print(self.solution.keys)
 
 
 
@@ -286,7 +291,8 @@ class Search:
     # A solução com a maior heuristica é a escolhida
     def checkHeuristic(self, solution):
         solution.heuristic = 100000 * solution.score - 100 * solution.sum_height - 10 * solution.hole_weight - 200 * solution.bumpiness
-        solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight]
+        solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
+
 
     def valid(self, piece):
         return not any(

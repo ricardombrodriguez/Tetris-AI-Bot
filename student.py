@@ -21,6 +21,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
         keys = []
 
+        iteracao = 1
+
         while True:
             try:
                 state = json.loads(
@@ -30,13 +32,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 # Peça recebida
                 piece = state['piece']
 
-
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
                     print("PIECE IS NONE")
 
                     new_piece = True
                     keys = None
+                    iteracao += 1
 
                 else:
 
@@ -46,6 +48,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if new_piece is True:
 
                         print("NEW PIECE....")
+                        print("ITERAÇÃO: ", iteracao)
                         current_shape = findShape(piece)
 
                         #t = SearchTree(state,current_shape)
@@ -55,7 +58,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         s = Search(state,current_shape)
                         s.search()
                         keys = s.solution.keys
-                        print(keys)
 
                         key = keys.pop(0)
                         new_piece = False
@@ -64,14 +66,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
                         if not keys:
-                            piece = None
-                            print("new piece is false and not keys!")
+                            key = "s"
                         else:
                             key = keys.pop(0)
-                            print("still have keys left...")
     
-
-
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
                 )  # send key command to server - you must implement this send in the AI agent
