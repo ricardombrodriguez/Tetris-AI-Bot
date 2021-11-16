@@ -8,9 +8,15 @@ import websockets
 # Next 4 lines are not needed for AI agents, please remove them from your code!
 import pygame
 
+<<<<<<< HEAD
+# pygame.init()
+# program_icon = pygame.image.load("data/icon2.png")
+# pygame.display.set_icon(program_icon)
+=======
 pygame.init()
 program_icon = pygame.image.load("data/icon2.png")
 pygame.display.set_icon(program_icon)
+>>>>>>> upstream/main
 
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
