@@ -8,7 +8,7 @@ class Solution:
     def __init__(self, shape): 
 
         self.shape = shape
-        self.keys = None
+        self.keys = []
 
 class Search:
 
@@ -38,27 +38,61 @@ class Search:
         print("posições do shape")
         print(self.shape)
 
-        min_x = min(self.shape.positions, key=lambda coords: coords[0])[0]
-        max_x = max(self.shape.positions, key=lambda coords: coords[0])[0]
-        print("min x ", min_x)
-        print("max x ", max_x)
+        # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
+        # e rodarmos a mesma, esta não fica encostada logo à esquerda.
+        for i in range(0,len(self.shape.plan)):
 
-        # percorrer colunas [1,8]
-        for x in range(1, self.x-1):
+            step = i
 
-            # percorrer cada rotação possível
-            for i in range(0,len(self.shape.plan)):
+            print(step)
 
-                step = i
+            solution = Solution(deepcopy(self.shape))
 
-                print(x, step)
+            solution.shape.rotate(step)
 
-                solution = Solution(deepcopy(self.shape))
+            solution.keys = ["w"]*step
 
-                solution.shape.rotate(step)
+            # para calcular o numero de keys para chegar a uma determinada coluna
+            min_x = min(self.shape.positions, key=lambda coords: coords[0])[0]
+            print("min x ", min_x)
 
-                direction = ["w"]
+            # percorrer colunas [1,8]
+            for x in range(1, self.x-1):
 
+                # nova instância para cada solução numa coluna duma rotação específica
+                solution = Solution(deepcopy(solution))
+
+                # diferença entre a coluna atual e o min_x, para depois saber se ele vai para a esquerda, fica no meio ou vai para a direita
+                x_differential = x - min_x
+
+                solution.keys += ["w"]*step
+
+                if x_differential < 0:
+                    solution.keys += ["a"]*abs(x_differential)
+                elif x_differential > 0:
+                    solution.keys += ["d"]*abs(x_differential)
+
+                # depois de obter as keys, a ultima é sempre o "s"
+                solution.keys += ["s"]
+
+                print("SOLUTION KEYS")
+                print(solution.keys)
+
+                self.possible_solutions.append(solution)
+
+        # AGORA, DEPOIS DE ADICIONAR TODAS AS SOLUTIONS ÀS POSSIBLE_SOLUTIONS, PODEMOS PERCORRER A LISTA DE KEYS DE CADA SOLUÇÃO
+        # SIMULAR O JOGO COM ESSAS KEYS E CALCULAR HEURISTICAS
+        print("num de possiveis solutions")
+        print(len(self.possible_solutions))
+
+        """
+        # check if valid
+        valid = self.valid(solution.shape)
+
+        # nao cria nós "filhos" e passa para o proximo open node
+        if not valid:
+            continue
+        """
 
 
 
