@@ -126,7 +126,7 @@ class Search:
 
                     if key in ["a", "d"]:
                         solution.shape.translate(shift, 0)
-                        if self.collide_lateral(solution.shape) or not self.valid(solution):
+                        if not self.valid(solution):
                             valid = False
                             break
 
@@ -139,7 +139,7 @@ class Search:
                 solution.game = deepcopy(self.game)
                 self.valid_solutions.append(solution)
 
-
+        print("IIII")
         for valid_solution in self.valid_solutions:
 
             # Pontuação ganha
@@ -295,8 +295,3 @@ class Search:
         ) and not any(
             [piece_part in self.game for piece_part in solution.shape.positions]
         )
-
-    def collide_lateral(self, piece):
-            return any(
-                [piece_part in self._lateral for piece_part in piece.positions]
-            )

@@ -4,19 +4,13 @@ import asyncio
 import json
 import logging
 import os
-<<<<<<< HEAD
-=======
 import requests
->>>>>>> upstream/main
 import websockets
 
 import pygame
 
-<<<<<<< HEAD
-=======
 from common import Dimensions
 
->>>>>>> upstream/main
 logging.basicConfig(level=logging.DEBUG)
 logger_websockets = logging.getLogger("websockets")
 logger_websockets.setLevel(logging.WARN)
@@ -78,29 +72,13 @@ def draw_info(surface, text, pos, color=(0, 0, 0), background=None):
 
 async def main_loop(queue):
     """Processes events from server and display's."""
-<<<<<<< HEAD
-    win = pygame.display.set_mode((600, 1000))
-=======
     win = pygame.display.set_mode((600 // SCALE, 1000 // SCALE))
->>>>>>> upstream/main
     pygame.display.set_caption("Tetris")
 
     logging.info("Waiting for map information from server")
     state = await queue.get()  # first state message includes map information
     logging.debug("Initial game status: %s", state)
     newgame_json = json.loads(state)
-<<<<<<< HEAD
-
-    win.fill((0, 0, 0))
-
-    for x, y in newgame_json["grid"]:
-        pygame.draw.rect(
-            win,
-            COLORS["blue"],
-            (x * BLOCK_SIDE, y * BLOCK_SIDE, BLOCK_SIDE, BLOCK_SIDE),
-            0,
-        )
-=======
     player_name = ""
 
     win.fill((0, 0, 0))
@@ -122,7 +100,6 @@ async def main_loop(queue):
     dimensions = Dimensions(*newgame_json["dimensions"])
 
     draw_blocks(newgame_json["grid"], COLORS["blue"])
->>>>>>> upstream/main
 
     game_speed = newgame_json["game_speed"]
 
@@ -135,14 +112,10 @@ async def main_loop(queue):
 
         try:
             state = json.loads(queue.get_nowait())
-<<<<<<< HEAD
-            print(state)
-=======
             if "score" in state:
                 score = state["score"]
             if "player" in state:
                 player_name = state["player"]
->>>>>>> upstream/main
 
             if "game_speed" in state:
                 game_speed = state["game_speed"]
@@ -150,53 +123,6 @@ async def main_loop(queue):
             win.fill((0, 0, 0))
 
             if "highscores" in state:
-<<<<<<< HEAD
-                draw_info(win, "HIGHSCORES", scale((5,5)), COLORS["white"])
-                for idx, player in enumerate(state["highscores"]):
-                    draw_info(win, f"{player[0]: <{20}} {player[1]}", scale((5,6 + idx)), COLORS["white"])
-                continue
-
-            for x, y in newgame_json["grid"]:
-                pygame.draw.rect(
-                    win,
-                    COLORS["blue"],
-                    (x * BLOCK_SIDE, y * BLOCK_SIDE, BLOCK_SIDE, BLOCK_SIDE),
-                    0,
-                )
-
-            for x, y in state["game"]:
-                pygame.draw.rect(
-                    win,
-                    COLORS["red"],
-                    (x * BLOCK_SIDE, y * BLOCK_SIDE, BLOCK_SIDE, BLOCK_SIDE),
-                    0,
-                )
-
-            if state["piece"]:
-                for x, y in state["piece"]:
-                    pygame.draw.rect(
-                        win,
-                        COLORS["green"],
-                        (x * BLOCK_SIDE, y * BLOCK_SIDE, BLOCK_SIDE, BLOCK_SIDE),
-                        0,
-                    )
-
-            yy = 0
-            for next_piece in state["next_pieces"]:
-                for x, y in next_piece:
-                    pygame.draw.rect(
-                        win,
-                        COLORS["pink"],
-                        (
-                            (x + 11) * BLOCK_SIDE,
-                            (y + 1 + yy) * BLOCK_SIDE,
-                            BLOCK_SIDE,
-                            BLOCK_SIDE,
-                        ),
-                        0,
-                    )
-                yy += 5
-=======
                 logging.debug("Final game status: %s", state)
 
                 if GLOBAL_HIGHSCORES:
@@ -256,7 +182,6 @@ async def main_loop(queue):
                 scale((dimensions.x + 1, dimensions.y)),
                 COLORS["white"],
             )
->>>>>>> upstream/main
 
         except asyncio.queues.QueueEmpty:
             await asyncio.sleep(1.0 / game_speed)
@@ -273,10 +198,6 @@ if __name__ == "__main__":
         "--scale", help="reduce size of window by x times", type=int, default=1
     )
     parser.add_argument("--port", help="TCP port", type=int, default=PORT)
-<<<<<<< HEAD
-    arguments = parser.parse_args()
-    SCALE = arguments.scale
-=======
     parser.add_argument(
         "--global-highscores",
         help="Retrieve global highscores",
@@ -293,7 +214,6 @@ if __name__ == "__main__":
     GLOBAL_HIGHSCORES = (
         arguments.grading_server if arguments.global_highscores else None
     )
->>>>>>> upstream/main
 
     LOOP = asyncio.get_event_loop()
     pygame.font.init()
@@ -310,8 +230,4 @@ if __name__ == "__main__":
     except RuntimeError as err:
         logger.error(err)
     finally:
-<<<<<<< HEAD
         LOOP.stop()
-=======
-        LOOP.stop()
->>>>>>> upstream/main
