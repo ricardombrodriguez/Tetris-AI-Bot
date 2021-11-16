@@ -6,6 +6,7 @@ import os
 import websockets
 from shape import S, Z, I, O, J, T, L, Shape
 from tree_search import *
+from search import *
 import random
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
@@ -46,9 +47,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         print("NEW PIECE....")
                         current_shape = findShape(piece)
-                        t = SearchTree(state,current_shape)
-                        t.search()
-                        keys = t.solution.keys
+
+                        #t = SearchTree(state,current_shape)
+                        #t.search()
+                        #keys = t.solution.keys
+
+                        s = Search(state,current_shape)
+                        s.search()
+
                         key = keys.pop(0)
                         new_piece = False
 
@@ -57,9 +63,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         # Usar a próxima 'key' para se chegarem às coordenadas pretendidas
                         if not keys:
                             piece = None
-                            key = "s"
+                            key = "a"
+                            print("new piece is false and not keys!")
                         else:
                             key = keys.pop(0)
+                            print("still have keys left...")
     
 
 
