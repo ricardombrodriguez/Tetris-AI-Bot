@@ -124,10 +124,7 @@ class Search:
 
                     if key in ["a", "d"]:
                         solution.shape.translate(shift, 0)
-                        if self.collide_lateral(solution.shape):
-                            valid = False
-                            break
-                        elif not self.valid(solution):
+                        if self.collide_lateral(solution.shape) or not self.valid(solution):
                             valid = False
                             break
 
@@ -168,8 +165,11 @@ class Search:
         #    if solution.heuristic == sorted_list[0].heuristic:
         #        equal_winners.append(solution)
 
-        #s = sorted(self.valid_solutions, key = lambda x: (-x[0], x[4], x[1], x[2], x[3]))
-        self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
+
+        # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
+        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.sum_height, x.hole_weight, x.bumpiness))
+        self.solution = s[0]
+
         print(" ===== SOLUTION =====")
         print(self.solution.shape.positions)
         print("AVG HEIGHT: ", self.solution.average_height)

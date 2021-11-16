@@ -29,7 +29,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
-                if len(keys) > 0:
+                if keys:
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
