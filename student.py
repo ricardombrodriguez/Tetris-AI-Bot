@@ -16,6 +16,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         # Receive information about static game properties
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
 
+        initial_info = json.loads(
+                    await websocket.recv()
+        )  # receive game update, this must be called timely or your game will get out of sync with the server
+
+        print(initial_info)
         print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
@@ -35,6 +40,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
 
+                print(state)
+
                 # Peça recebida
                 piece = state['piece']
 
@@ -50,8 +57,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if new_piece is True:
 
                         current_shape = findShape(piece)
-
-                        s = Search(state,current_shape)
+                        s = Search(state,current_shape,initial_info)
                         s.search()
                         keys = s.solution.keys
 

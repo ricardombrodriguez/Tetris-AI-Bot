@@ -36,6 +36,7 @@ class Game:
         self.running = True
 
     def info(self):
+        
         return {
             "dimensions": self.dimensions,
             "grid": self.grid,

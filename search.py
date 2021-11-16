@@ -13,22 +13,21 @@ class Solution:
 
 class Search:
 
-    def __init__(self, state, shape): 
+    def __init__(self, state, shape, initial_info): 
 
         self.state = state
         self.game = []
         for tup in state['game']:
             self.game.append((tup[0], tup[1]))
-        print("self.game")
-        print(self.game)
         self.coords = state['piece']  
 
-        self.x = 10
-        self.y = 30
-        self._bottom = [(i, self.y) for i in range(self.x)]  # bottom
+        self.x = initial_info['dimensions'][0]
+        self.y = initial_info['dimensions'][1]
+        self.grid = initial_info['grid']
+        print(self.grid)
+
         self._lateral = [(0, i) for i in range(self.y)]  # left
         self._lateral.extend([(self.x - 1, i) for i in range(self.y)])  # right
-        self.grid = self._bottom + self._lateral
 
         self.shape = shape 
         self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
@@ -101,7 +100,10 @@ class Search:
 
                 solution.shape.y += 1
 
+                print("entrou1")
+
                 if self.valid(solution):
+                    print("entrou2")
 
                     key = keys.pop(0)
 
@@ -158,13 +160,6 @@ class Search:
         print("chegou ao final")
 
         #  solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
-        
-        #sorted_list = min(self.candidates, key = lambda x : x.average_height)
-        #equal_winners = []
-        #for solution in sorted_list:
-        #    if solution.heuristic == sorted_list[0].heuristic:
-        #        equal_winners.append(solution)
-
 
         # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
         s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height))
@@ -302,6 +297,6 @@ class Search:
         )
 
     def collide_lateral(self, piece):
-        return any(
-            [piece_part in self._lateral for piece_part in piece.positions]
-        )
+            return any(
+                [piece_part in self._lateral for piece_part in piece.positions]
+            )
