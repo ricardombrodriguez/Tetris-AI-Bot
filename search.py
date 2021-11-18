@@ -91,8 +91,6 @@ class Search:
             valid = True
             while True:
 
-                solution.shape.y += 1
-
                 if self.valid(solution):
 
                     key = keys.pop(0)
@@ -113,6 +111,8 @@ class Search:
 
                     elif key == "d":
                         shift = +1
+
+                    solution.shape.y += 1
 
                     if key in ["a", "d"]:
                         solution.shape.translate(shift, 0)
@@ -153,11 +153,8 @@ class Search:
     
 
         # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
-        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.sum_height, x.hole_weight, x.bumpiness))
+        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.hole_weight, x.average_height, x.sum_height, x.bumpiness))
         self.solution = s[0]
-
-
-
 
 
 
@@ -168,7 +165,7 @@ class Search:
         lines = 0
 
         for item, count in Counter(y for _, y in solution.game).most_common():
-            if count == len(self._bottom) - 2:
+            if count == self.x - 2:
                 solution.game = [(x, y) for (x, y) in solution.game if y != item]  # remove row
                 solution.game = [
                     (x, y + 1) if y < item else (x, y) for (x, y) in solution.game
@@ -225,6 +222,7 @@ class Search:
                 else:
                     hole_weight += severity
 
+            """
             severity = 1
             # verificar se tem, nas colunas adjacentes, blocos que estão ao seu lado
             for y in range(0,self.y):
@@ -235,6 +233,7 @@ class Search:
                         hole_weight += severity
                     if (x+1,y) in solution.game:
                         hole_weight += severity
+            """
 
         solution.hole_weight = hole_weight
         #Nota: quanto maior a hole_weight, pior a solução
@@ -270,8 +269,6 @@ class Search:
         for coord in solution.shape.positions:
             solution.average_height += (self.y - coord[1])
         solution.average_height /= len(solution.shape.positions)
-
-
 
 
     def valid(self, solution):
