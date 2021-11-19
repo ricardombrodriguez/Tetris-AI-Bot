@@ -13,7 +13,7 @@ class Solution:
 
 class Search:
 
-    def __init__(self, state, shape, initial_info): 
+    def __init__(self, state, shape, initial_info, next_shapes): 
 
         self.state = state
         self.game = []
@@ -30,9 +30,17 @@ class Search:
 
         self.shape = shape 
         self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
+        self.next_shapes = next_shapes
+        for next_shape in next_shapes:
+            next_shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
+        self.shapes = [self.shape, self.next_shapes]    # peça atual + 3 próximas
+
         self.possible_solutions = []
         self.valid_solutions = []
         self.best_solution = None
+
+        # começa no 0, ou seja, vai começar a ver a peça atual (mas depois é incrementado até chegar ao lookahead)
+        self.current_iteration = 0
 
         print("[SEARCH] Search inicializada")
 
@@ -141,6 +149,8 @@ class Search:
             # A pontuação do peso dos buracos depois da solução
             self.checkHoleWeight(valid_solution)
 
+            #self.checkOpenHolesWeight(valid_solution, self)
+
             # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
             self.checkBumpiness(valid_solution)
 
@@ -153,9 +163,12 @@ class Search:
     
 
         # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
-        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.hole_weight, x.average_height, x.sum_height, x.bumpiness))
+        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height))
         self.solution = s[0]
+        print("SOLUÇÃO - HOLE WEIGHT:")
+        print(self.solution.hole_weight)
 
+    # CALCULAR A COMBINAÇÃO DE SOLUÇÕES COM MAIOR HEURÍSTICA (SOMAR TODOS OS SCORES DAS SOLUÇÕES, MAS AS RESTANTES BASTA SABER AS HEURISTICAS DA ULTIMA SOLUÇÃO)
 
 
     # DONE
@@ -213,14 +226,10 @@ class Search:
             height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
 
             # verificar se está bloqueado acima
-            severity = 3
             for y in range(height+1,self.y):
-                # espaço ocupado
-                if ((x,y) in column_coords):
-                    severity += 3
-                # espaço vazio (é buraco)
-                else:
-                    hole_weight += severity
+                # espaço vazio
+                if ((x,y) not in column_coords):
+                    hole_weight += 1
 
             """
             severity = 1
@@ -238,6 +247,28 @@ class Search:
         solution.hole_weight = hole_weight
         #Nota: quanto maior a hole_weight, pior a solução
 
+    """
+    def checkOpenHolesWeight(self, solution, search):
+
+        open_hole_weight = 0
+
+        for x in range(1, self.x-1):
+            column_coords = []
+            for coord in solution.game:
+                if coord[0] == x:
+                    column_coords.append(coord)
+
+            # verificar se tem, nas colunas adjacentes, blocos que estão ao seu lado
+            for y in range(0,self.y):
+                # se é um bloco vazio / buraco, verificar se existem blocos ao seu lado esquerdo e ao lado direito
+                if not ((x,y) in column_coords):
+                    # à esquerda
+                    if ((x-1,y) in solution.game or (x-1,y) in search.grid) and ((x+1,y) in solution.game or (x+1,y) in search.grid):
+                        open_hole_weight += 1
+
+
+        solution.open_hole_weight = open_hole_weight
+    """
 
     # DONE
     def checkBumpiness(self, solution):
