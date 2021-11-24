@@ -45,22 +45,25 @@ class Search:
         print("[SEARCH] Search inicializada")
 
 
-    def search(self):
+    def search(self, previous=None, iteration=0):
 
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
-        for i in range(0,len(self.shape.plan)):
+
+        current = deepcopy(self.shapes[iteration])  # shape atual que estamos a manipular
+
+        for i in range(0,len(current.plan)):
 
             step = i
 
-            original = Solution(deepcopy(self.shape))
+            original = Solution(deepcopy(current))
 
             original.shape.rotate(step)
 
             #original.keys = ["w"]*step
 
             # para calcular o numero de keys para chegar a uma determinada coluna
-            min_x = min(self.shape.positions, key=lambda coords: coords[0])[0]
+            min_x = min(current.positions, key=lambda coords: coords[0])[0]
 
             # percorrer colunas [1,8]
             for x in range(1, self.x-1):
@@ -90,7 +93,7 @@ class Search:
             keys = deepcopy(sol.keys)
 
             # obter a shape com o estado inicial
-            solution = Solution(deepcopy(self.shape))
+            solution = Solution(deepcopy(current))
 
             # guardar as keys para chegar ao estado especifico dessa solução
             solution.keys = deepcopy(keys)
@@ -155,6 +158,12 @@ class Search:
             self.checkBumpiness(valid_solution)
 
             self.checkLowestSolution(valid_solution)
+
+        # próxima iteração
+
+        for valid_solution in self.valid_solutions:
+
+            self.search(valid_solution, iteration+1)
 
 
         print("chegou ao final")
