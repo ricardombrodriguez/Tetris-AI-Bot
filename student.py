@@ -53,8 +53,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         current_shape = findShape(piece)
                         next_shapes = [findShape(next_piece) for next_piece in next_pieces]
                         s = Search(state,current_shape,initial_info,next_shapes)
+                        print("VAI ENTRAR NO SEARCH")
                         s.search()
-                        keys = s.solution.keys
+                        print("SAIU DO SEARCH")
+                        keys = s.best_solution.keys
 
                         new_piece = False
 

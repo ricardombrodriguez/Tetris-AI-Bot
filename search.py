@@ -5,10 +5,11 @@ from shape import *
 # uma das soluções
 class Solution:
 
-    def __init__(self, shape): 
+    def __init__(self, shape, pieces): 
 
         self.shape = shape
         self.keys = []
+        self.pieces = pieces
 
 
 class Search:
@@ -33,7 +34,7 @@ class Search:
         self.next_shapes = next_shapes
         for next_shape in next_shapes:
             next_shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
-        self.shapes = [self.shape, self.next_shapes]    # peça atual + 3 próximas
+        self.shapes = [self.shape] + self.next_shapes    # peça atual + 3 próximas
 
         self.possible_solutions = []
         self.valid_solutions = []
@@ -41,26 +42,30 @@ class Search:
 
         # começa no 0, ou seja, vai começar a ver a peça atual (mas depois é incrementado até chegar ao lookahead)
         self.current_iteration = 0
+        self.lookahead = 4
 
         print("[SEARCH] Search inicializada")
 
 
-    def search(self, previous=None, iteration=0):
+    # no inicio, o valor de solution é None
+    def search(self, solution=None):
 
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
 
-        current = deepcopy(self.shapes[iteration])  # shape atual que estamos a manipular
+        # current -> instância do objeto que vamos manipular agora
+        current = None
+        game = None
+        if solution is None:
+            current = deepcopy(self.shape)  # primeira shape que recebemos, ainda não há soluções
+            game = self.grid
+        else:
+            current = deepcopy(solution.pieces[0])  # guardar a primeira peça existente na lista
+            game = solution.game[:]
 
         for i in range(0,len(current.plan)):
 
             step = i
-
-            original = Solution(deepcopy(current))
-
-            original.shape.rotate(step)
-
-            #original.keys = ["w"]*step
 
             # para calcular o numero de keys para chegar a uma determinada coluna
             min_x = min(current.positions, key=lambda coords: coords[0])[0]
@@ -69,7 +74,11 @@ class Search:
             for x in range(1, self.x-1):
 
                 # nova instância para cada solução numa coluna duma rotação específica
-                solution = Solution(deepcopy(original))
+                solution = Solution(deepcopy(current), deepcopy(self.shapes)) if solution is None else Solution(deepcopy(current), deepcopy(solution.pieces))
+                solution.shape.rotate(step) 
+                solution.game = game
+
+
 
                 # diferença entre a coluna atual e o min_x, para depois saber se ele vai para a esquerda, fica no meio ou vai para a direita
                 x_differential = x - min_x
@@ -84,100 +93,101 @@ class Search:
                 # depois de obter as keys, a ultima é sempre o "s"
                 solution.keys += ["s"]
 
-                self.possible_solutions.append(solution)
+                keys = deepcopy(solution.keys)
 
-        # AGORA, DEPOIS DE ADICIONAR TODAS AS SOLUTIONS ÀS POSSIBLE_SOLUTIONS, PODEMOS PERCORRER A LISTA DE KEYS DE CADA SOLUÇÃO
-        # SIMULAR O JOGO COM ESSAS KEYS E CALCULAR HEURISTICAS
-        for sol in self.possible_solutions:
+                # enquanto há keys para serem premidas
+                valid = True
+                while True:
 
-            keys = deepcopy(sol.keys)
+                    if self.valid(solution):
 
-            # obter a shape com o estado inicial
-            solution = Solution(deepcopy(current))
+                        key = keys.pop(0)
 
-            # guardar as keys para chegar ao estado especifico dessa solução
-            solution.keys = deepcopy(keys)
+                        if key == "s":
 
-            # enquanto há keys para serem premidas
-            valid = True
-            while True:
+                            while self.valid(solution):
+                                solution.shape.y +=1
+                            solution.shape.y -= 1
 
-                if self.valid(solution):
+                        elif key == "w":
+                            solution.shape.rotate()
+                            if not self.valid(solution):
+                                solution.shape.rotate(-1)
 
-                    key = keys.pop(0)
+                        elif key == "a":
+                            shift = -1
 
-                    if key == "s":
+                        elif key == "d":
+                            shift = +1
 
-                        while self.valid(solution):
-                            solution.shape.y +=1
-                        solution.shape.y -= 1
+                        solution.shape.y += 1
 
-                    elif key == "w":
-                        solution.shape.rotate()
-                        if not self.valid(solution):
-                            solution.shape.rotate(-1)
+                        if key in ["a", "d"]:
+                            solution.shape.translate(shift, 0)
+                            if not self.valid(solution):
+                                valid = False
+                                break
 
-                    elif key == "a":
-                        shift = -1
-
-                    elif key == "d":
-                        shift = +1
-
-                    solution.shape.y += 1
-
-                    if key in ["a", "d"]:
-                        solution.shape.translate(shift, 0)
-                        if not self.valid(solution):
-                            valid = False
+                        if not keys:
                             break
 
-                    if not keys:
-                        break
 
-            # agora a peça já está repousada
+                # agora a peça já está repousada
 
-            if valid:
-                solution.game = deepcopy(self.game)
-                self.valid_solutions.append(solution)
+                if valid:
+
+                    # temos que adicionar as soluções ao solution.game
+
+                    solution.game += solution.shape.positions
+                
+
+                    if len(solution.pieces) == self.lookahead:
+
+                        
+                    
+                        # Pontuação ganha
+                        self.checkScore(solution)
+
+                        # A altura média do jogo depois de colocar essa peças
+                        self.checkHeight(solution)
+
+                        # A pontuação do peso dos buracos depois da solução
+                        self.checkHoleWeight(solution)
+
+                        #self.checkOpenHolesWeight(solution, self)
+
+                        # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
+                        self.checkBumpiness(solution)
+
+                        self.checkLowestSolution(solution)
+                        
+                        self.valid_solutions.append(solution)
+
+                        # update best solution if it's the new best solution
+                        s = sorted([self.best_solution, solution], key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height)) if self.best_solution else [solution]
+                        self.best_solution = s[0]
 
 
-        for valid_solution in self.valid_solutions:
+                    else:
 
-            # Pontuação ganha
-            self.checkScore(valid_solution)
-
-            # A altura média do jogo depois de colocar essa peças
-            self.checkHeight(valid_solution)
-
-            # A pontuação do peso dos buracos depois da solução
-            self.checkHoleWeight(valid_solution)
-
-            #self.checkOpenHolesWeight(valid_solution, self)
-
-            # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
-            self.checkBumpiness(valid_solution)
-
-            self.checkLowestSolution(valid_solution)
-
-        # próxima iteração
-
-        for valid_solution in self.valid_solutions:
-
-            self.search(valid_solution, iteration+1)
+                        new_solution = deepcopy(solution)
+                        new_solution.pieces.pop(0)
+                        self.search(new_solution)
 
 
-        print("chegou ao final")
+                        # IMPORTANTE
 
-        #  solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
-    
+                        # ATUALIZAR O SOLUTION.GAME, SE AS LINHAS FOREM REMOVIDAS, AS COORDENADAS DAS MESMAS TEM DE SER REMOVIDAS
 
-        # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
-        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height))
-        self.solution = s[0]
-        print("SOLUÇÃO - HOLE WEIGHT:")
-        print(self.solution.hole_weight)
 
-    # CALCULAR A COMBINAÇÃO DE SOLUÇÕES COM MAIOR HEURÍSTICA (SOMAR TODOS OS SCORES DAS SOLUÇÕES, MAS AS RESTANTES BASTA SABER AS HEURISTICAS DA ULTIMA SOLUÇÃO)
+
+                    # verificar: 
+                        # se a solução está na ultima peça da solution.pieces:
+                            # -> calcular heuristicas
+                            # -> adicionar a uma lista de valid_solutions
+                        # caso contrário
+                            # passar para a próxima iteração AKA chamar a função recustiva com solution.pieces[1:] (apesar de passar a solution como parâmetro)
+
 
 
     # DONE
