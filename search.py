@@ -57,6 +57,7 @@ class Search:
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
 
         self.current_iteration += 1
+        print(self.current_iteration)
 
         # current -> instância do objeto que vamos manipular agora
         current = None
@@ -67,11 +68,12 @@ class Search:
             current = deepcopy(self.shape)  # primeira shape que recebemos, ainda não há soluções
             game = self.grid[:]
         else:
-            print("solution exists")
+            #print("solution exists")
             current = deepcopy(solution.pieces[0])  # guardar a primeira peça existente na lista
             game = solution.game[:]
             previous_keys = solution.keys[:]
 
+        """
         print("current shape")
         print(current)
         if solution:
@@ -81,6 +83,7 @@ class Search:
             print(solution.game)
             print("keys")
             print(solution.keys)
+            """
 
         for i in range(0,len(current.plan)):
 
@@ -97,16 +100,15 @@ class Search:
                 solution.shape.rotate(step) 
                 solution.game = game
 
-
-
                 # diferença entre a coluna atual e o min_x, para depois saber se ele vai para a esquerda, fica no meio ou vai para a direita
                 x_differential = x - min_x
 
                 keys = []
                 solution.keys = previous_keys[:]
 
-                print("solution.keys [BEFORE - AFTER]:")
-                print(solution.keys)
+
+                #print("solution.keys [BEFORE - AFTER]:")
+                #print(solution.keys)
 
                 solution.keys += ["w"]*step
 
@@ -121,7 +123,7 @@ class Search:
                 solution.keys += ["s"]
                 keys += ["s"]
 
-                print(solution.keys)
+                #print(solution.keys)
 
                 # enquanto há keys para serem premidas
                 valid = True
@@ -202,9 +204,9 @@ class Search:
                         # update best solution if it's the new best solution
                         s = sorted([self.best_solution, solution], key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height)) if self.best_solution else [solution]
                         self.best_solution = s[0]
-                        print("best solution keys")
-                        print(self.best_solution.keys)
-                        print()
+                        #print("best solution keys")
+                        #print(self.best_solution.keys)
+                        print("comparação de soluções - " + str(len(self.valid_solutions)))
 
 
                     else:
