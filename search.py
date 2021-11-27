@@ -20,7 +20,7 @@ class Search:
         self.game = []
         for tup in state['game']:
             self.game.append((tup[0], tup[1]))
-        self.coords = state['piece']  
+        #self.coords = state['piece']  
 
         self.grid = []
         for coord in initial_info['grid']:
@@ -34,56 +34,41 @@ class Search:
         self.next_shapes = next_shapes
         for next_shape in next_shapes:
             next_shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
-        self.shapes = [self.shape] + self.next_shapes    # peça atual + 3 próximas
 
-        self.possible_solutions = []
-        self.valid_solutions = []
         self.best_solution = None
-
-        # começa no 0, ou seja, vai começar a ver a peça atual (mas depois é incrementado até chegar ao lookahead)
-        self.current_iteration = 0
-        self.lookahead = 4
-
-        print("[SEARCH] Search inicializada")
-        for s in self.shapes:
-            print(s)
-        print("=============================")
 
 
     # no inicio, o valor de solution é None
     def search(self, solution=None):
 
-        # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
-        # e rodarmos a mesma, esta não fica encostada logo à esquerda.
-
-        self.current_iteration += 1
-        print(self.current_iteration)
-
         # current -> instância do objeto que vamos manipular agora
+        # game -> variavel que vai guardar as coordenadas de todas as peças + a grid
+        # previous_keys -> lista de keys obtidas até agora pela solução
         current = None
         game = None
         previous_keys = []
+
+
+
         if solution is None:
-            print("solution is none")
+            pass
+        else:
+            if len(solution.pieces) == 3:
+                print("1º peça:")
+            elif len(solution.pieces) == 2:
+                print("   2º peça:")
+            elif len(solution.pieces) == 1:
+                print("       3º peça:")
+
+
+        if solution is None:
             current = deepcopy(self.shape)  # primeira shape que recebemos, ainda não há soluções
             game = self.grid[:]
         else:
-            #print("solution exists")
             current = deepcopy(solution.pieces[0])  # guardar a primeira peça existente na lista
             game = solution.game[:]
             previous_keys = solution.keys[:]
 
-        """
-        print("current shape")
-        print(current)
-        if solution:
-            print("remaining pieces: " + str(len(solution.pieces[1:])))
-            print("=== INFO ===")
-            print("game")
-            print(solution.game)
-            print("keys")
-            print(solution.keys)
-            """
 
         for i in range(0,len(current.plan)):
 
@@ -96,7 +81,7 @@ class Search:
             for x in range(1, self.x-1):
 
                 # nova instância para cada solução numa coluna duma rotação específica
-                solution = Solution(deepcopy(current), self.shapes[1:]) if solution is None else Solution(deepcopy(current), solution.pieces[1:])
+                solution = Solution(deepcopy(current), self.next_shapes) if solution is None else Solution(deepcopy(current), solution.pieces[1:])
                 solution.shape.rotate(step) 
                 solution.game = game
 
@@ -106,10 +91,7 @@ class Search:
                 keys = []
                 solution.keys = previous_keys[:]
 
-
-                #print("solution.keys [BEFORE - AFTER]:")
-                #print(solution.keys)
-
+                keys += ["w"]*step
                 solution.keys += ["w"]*step
 
                 if x_differential < 0:
@@ -122,8 +104,6 @@ class Search:
                 # depois de obter as keys, a ultima é sempre o "s"
                 solution.keys += ["s"]
                 keys += ["s"]
-
-                #print(solution.keys)
 
                 # enquanto há keys para serem premidas
                 valid = True
@@ -170,72 +150,52 @@ class Search:
 
                     # temos que adicionar as soluções ao solution.game
 
-                    solution.game += solution.shape.positions
+                    solution.game += solution.shape.positions[:]
+
+
+                    # guardar score e atualizar posições se linhas forem eliminadas
+
+                    # Pontuação ganha
+                    self.checkScore(solution)
+
+                    # A altura média do jogo depois de colocar essa peças
+                    self.checkHeight(solution)
+
+                    # A pontuação do peso dos buracos depois da solução
+                    self.checkHoleWeight(solution)
+
+                    #self.checkOpenHolesWeight(solution, self)
+
+                    # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
+                    self.checkBumpiness(solution)
+
+                    self.checkLowestSolution(solution)
                 
                     #chegou ao final
                     if not solution.pieces:
-
-                        
                     
-                        # Pontuação ganha
-                        self.checkScore(solution)
-
-                        # A altura média do jogo depois de colocar essa peças
-                        self.checkHeight(solution)
-
-                        # A pontuação do peso dos buracos depois da solução
-                        self.checkHoleWeight(solution)
-
-                        #self.checkOpenHolesWeight(solution, self)
-
-                        # A pontuação 'bumpiness' que calcula a diferença de altura em colunas adjacentes à solução
-                        self.checkBumpiness(solution)
-
-                        self.checkLowestSolution(solution)
-                        
-                        self.valid_solutions.append(solution)
-
-                        """
-                        print("PEÇAS DA SOLUÇÃO & KEYS:")
-                        print(solution.shape.positions)
-                        print(solution.keys)
-                        """
-
                         # update best solution if it's the new best solution
+                        print("best solution, current solution")
+                        print([self.best_solution, solution])
+
                         s = sorted([self.best_solution, solution], key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height)) if self.best_solution else [solution]
                         self.best_solution = s[0]
-                        #print("best solution keys")
-                        #print(self.best_solution.keys)
-                        print("comparação de soluções - " + str(len(self.valid_solutions)))
 
 
                     else:
 
                         new_solution = deepcopy(solution)
-                        #new_solution.pieces.pop(0)
-                        print("vai chamar nova função:")
                         self.search(new_solution)
-
-
-                        # IMPORTANTE
-
-                        # ATUALIZAR O SOLUTION.GAME, SE AS LINHAS FOREM REMOVIDAS, AS COORDENADAS DAS MESMAS TEM DE SER REMOVIDAS
-
-
-
-                    # verificar: 
-                        # se a solução está na ultima peça da solution.pieces:
-                            # -> calcular heuristicas
-                            # -> adicionar a uma lista de valid_solutions
-                        # caso contrário
-                            # passar para a próxima iteração AKA chamar a função recustiva com solution.pieces[1:] (apesar de passar a solution como parâmetro)
 
 
 
     # DONE
     def checkScore(self, solution):
         
-        solution.score = 0
+        score = 0
+        if hasattr(solution, 'score'):
+            score = solution.score
+        solution.score = score
         lines = 0
 
         for item, count in Counter(y for _, y in solution.game).most_common():

@@ -54,19 +54,17 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         current_shape = findShape(piece)
                         next_shapes = [findShape(next_piece) for next_piece in next_pieces]
                         s = Search(state,current_shape,initial_info,next_shapes)
-                        print("VAI ENTRAR NO SEARCH")
                         start = timeit.timeit()
+
                         s.search()
+                        
                         end = timeit.timeit()
                         print("TEMPO (EM MILISSEGUNDOS): " + str(end-start))
-                        print("SAIU DO SEARCH")
-                        print("NUMBER OF ITERATIONS:" + str(s.current_iteration))
                         keys = s.best_solution.keys
                         print("Keys:")
                         print(keys)
                         print("Score")
                         print(s.best_solution.score)
-                        print(s.best_solution.sum_height)
 
 
                         new_piece = False
