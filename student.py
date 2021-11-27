@@ -1,11 +1,11 @@
 import asyncio
+import time
 import getpass
 import json
 import os
 import websockets
 from shape import S, Z, I, O, J, T, L, Shape
 from search import *
-import timeit
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
@@ -18,6 +18,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
+        print(initial_info)
         print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
@@ -36,12 +37,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
 
+                print(state)
+
                 # Peça recebida
                 piece = state['piece']
-                next_pieces = state['next_pieces']
 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
+                    print("PIECE IS NONE")
 
                     new_piece = True
                     iteracao += 1
@@ -51,21 +54,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     # Encontrar a melhor solução para a nova peça
                     if new_piece is True:
 
+                        print("NEW PIECE....")
+                        print("ITERAÇÃO: ", iteracao)
                         current_shape = findShape(piece)
-                        next_shapes = [findShape(next_piece) for next_piece in next_pieces]
-                        s = Search(state,current_shape,initial_info,next_shapes)
-                        start = timeit.timeit()
-
+                        s = Search(state,current_shape,initial_info)
                         s.search()
-                        
-                        end = timeit.timeit()
-                        print("TEMPO (EM MILISSEGUNDOS): " + str(end-start))
-                        keys = s.best_solution.keys
-                        print("Keys:")
-                        print(keys)
-                        print("Score")
-                        print(s.best_solution.score)
-
+                        keys = s.solution.keys
 
                         new_piece = False
 
@@ -73,8 +67,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print("Server has cleanly disconnected us")
                 return
 
+# Esta função tem como objetivo encontrar qual é a melhor posição para a peça atual encaixar no jogo. 
+# Ela guarda esta informação para depois, por cada iteração, saber qual é a key que deve ser pressionada.
+def solution(state):
+    pass
 
+# A partir da solução obtida, retornar a key que é preciso premir para chegar à solução
+def searchKey():
+    pass
+
+# Search the shape (FUNÇÃO ESTÁ MAL)
 # SHAPES = [Shape(s) for s in [S, Z, I, O, J, T, L]]
+# ESTE MÉTODO N FUNCIONA PORQUE VARIAS SHAPES TEM A DIFERENÇA IGUAL, CORRIGIR ISTO AMANHÃ
 def findShape(piece):
 
     #S (done)
@@ -106,6 +110,7 @@ def findShape(piece):
 
     #O (done)
     elif piece[0][0] == piece[2][0] and piece[0][1] == piece[1][1] and piece[1][0] == piece[3][0] and piece[2][1] == piece[3][1]:
+        print("its O")
         return Shape(O)
 
     #J (done acho)
