@@ -45,6 +45,9 @@ class Search:
         self.lookahead = 4
 
         print("[SEARCH] Search inicializada")
+        for s in self.shapes:
+            print(s)
+        print("=============================")
 
 
     # no inicio, o valor de solution é None
@@ -53,15 +56,31 @@ class Search:
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
 
+        self.current_iteration += 1
+
         # current -> instância do objeto que vamos manipular agora
         current = None
         game = None
+        previous_keys = []
         if solution is None:
+            print("solution is none")
             current = deepcopy(self.shape)  # primeira shape que recebemos, ainda não há soluções
-            game = self.grid
+            game = self.grid[:]
         else:
+            print("solution exists")
             current = deepcopy(solution.pieces[0])  # guardar a primeira peça existente na lista
             game = solution.game[:]
+            previous_keys = solution.keys[:]
+
+        print("current shape")
+        print(current)
+        if solution:
+            print("remaining pieces: " + str(len(solution.pieces[1:])))
+            print("=== INFO ===")
+            print("game")
+            print(solution.game)
+            print("keys")
+            print(solution.keys)
 
         for i in range(0,len(current.plan)):
 
@@ -74,7 +93,7 @@ class Search:
             for x in range(1, self.x-1):
 
                 # nova instância para cada solução numa coluna duma rotação específica
-                solution = Solution(deepcopy(current), deepcopy(self.shapes)) if solution is None else Solution(deepcopy(current), deepcopy(solution.pieces))
+                solution = Solution(deepcopy(current), self.shapes[1:]) if solution is None else Solution(deepcopy(current), solution.pieces[1:])
                 solution.shape.rotate(step) 
                 solution.game = game
 
@@ -83,21 +102,32 @@ class Search:
                 # diferença entre a coluna atual e o min_x, para depois saber se ele vai para a esquerda, fica no meio ou vai para a direita
                 x_differential = x - min_x
 
+                keys = []
+                solution.keys = previous_keys[:]
+
+                print("solution.keys [BEFORE - AFTER]:")
+                print(solution.keys)
+
                 solution.keys += ["w"]*step
 
                 if x_differential < 0:
                     solution.keys += ["a"]*abs(x_differential)
+                    keys += ["a"]*abs(x_differential)
                 elif x_differential > 0:
                     solution.keys += ["d"]*abs(x_differential)
+                    keys += ["d"]*abs(x_differential)
 
                 # depois de obter as keys, a ultima é sempre o "s"
                 solution.keys += ["s"]
+                keys += ["s"]
 
-                keys = deepcopy(solution.keys)
+                print(solution.keys)
 
                 # enquanto há keys para serem premidas
                 valid = True
                 while True:
+
+                    # verificar se elimina linhas -> se sim, tirar do solution.game as coordenadas
 
                     if self.valid(solution):
 
@@ -140,8 +170,8 @@ class Search:
 
                     solution.game += solution.shape.positions
                 
-
-                    if len(solution.pieces) == self.lookahead:
+                    #chegou ao final
+                    if not solution.pieces:
 
                         
                     
@@ -163,15 +193,25 @@ class Search:
                         
                         self.valid_solutions.append(solution)
 
+                        """
+                        print("PEÇAS DA SOLUÇÃO & KEYS:")
+                        print(solution.shape.positions)
+                        print(solution.keys)
+                        """
+
                         # update best solution if it's the new best solution
                         s = sorted([self.best_solution, solution], key = lambda x: (-x.score, x.hole_weight, x.average_height, x.bumpiness, x.sum_height)) if self.best_solution else [solution]
                         self.best_solution = s[0]
+                        print("best solution keys")
+                        print(self.best_solution.keys)
+                        print()
 
 
                     else:
 
                         new_solution = deepcopy(solution)
-                        new_solution.pieces.pop(0)
+                        #new_solution.pieces.pop(0)
+                        print("vai chamar nova função:")
                         self.search(new_solution)
 
 
