@@ -47,13 +47,25 @@ class Search:
 
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
+
+        self.iter = 0
+
+        print()
+
         for i in range(0,len(self.shape.plan)):
+
 
             step = i
 
             original = Solution(deepcopy(self.shape))
 
+            print("shape inicial:")
+            print(original.shape.positions)
+
             original.shape.rotate(step)
+
+            print("shape:")
+            print(original.shape)
 
             # para calcular o numero de keys para chegar a uma determinada coluna
             min_x = min(original.shape.positions, key=lambda coords: coords[0])[0]
@@ -75,6 +87,8 @@ class Search:
 
                 # depois de obter as keys, a ultima é sempre o "s"
                 solution.keys += ["s"]
+
+                print(solution.keys)
 
                 self.possible_solutions.append(solution)
 
@@ -129,6 +143,7 @@ class Search:
             # agora a peça já está repousada
 
             if valid:
+                self.iter += 1
                 solution.game = deepcopy(self.game)
                 self.valid_solutions.append(solution)
 
@@ -137,6 +152,10 @@ class Search:
 
             # Pontuação ganha
             self.checkScore(valid_solution)
+
+            self.row_transitions(valid_solution)
+
+            self.column_transitions(valid_solution)
 
             # A altura média do jogo depois de colocar essa peças
             self.checkHeight(valid_solution)
@@ -149,16 +168,25 @@ class Search:
 
             self.checkLowestSolution(valid_solution)
 
-            valid_solution.heuristic = 100000*valid_solution.score - (200 * valid_solution.hole_weight + 200 * valid_solution.average_height + 50 * valid_solution.bumpiness + 200 * valid_solution.sum_height)
-            print(valid_solution.heuristic)
 
-            print("====================")
-            print()
+            self.sum_wells(valid_solution)
 
-        print("chegou ao final")
+            #valid_solution.heuristic = 100000*valid_solution.score - (100 * valid_solution.block_weight + 50 * valid_solution.altitude_difference + 450 * valid_solution.hole_weight + 50 * valid_solution.average_height + 50 * valid_solution.bumpiness + 300 * valid_solution.sum_height)
+            valid_solution.heuristic = -4.500158825082766 * valid_solution.average_height + 3.4181268101392694 * valid_solution.score -3.2178882868487753 * valid_solution.row_transitions -9.348695305445199 * valid_solution.column_transitions -7.899265427351652 * valid_solution.hole_weight -3.3855972247263626 * valid_solution.sum_wells
+
+            """
+            a = -0.510066
+            b = 0.760666
+            c = -0.35663
+            d = -0.184483
+
+            valid_solution.heuristic = a * valid_solution.sum_height + b * valid_solution.score + c * valid_solution.hole_weight + d * valid_solution.bumpiness
+            """
+
 
         #  solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
     
+        print("NUM ITERAÇÕES: " + str(self.iter))
 
         self.solution = max(self.valid_solutions, key = lambda x : x.heuristic)
         #s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.hole_weight, x.bumpiness, x.sum_height))
@@ -166,9 +194,63 @@ class Search:
 
 
 
+    def sum_wells(self,solution):
+
+        solution.sum_wells = 0
+
+        for x in range(1, self.x-1):
+
+            column_coords = []
+            for coord in solution.game:
+                if coord[0] == x:
+                    column_coords.append(coord)
+            column_height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
+
+            # PARA CIMA
+            for y in range(column_height-1,0):
+
+                #ver na esquerda:
+                if ((x,y-1) in solution.game or (x,y-1) in self.grid) and ((x,y+1) in solution.game or (x,y+1) in self.grid):
+                    solution.sum_wells += 1
 
 
+    def row_transitions(self, solution):
 
+        solution.row_transitions = 0
+
+        for y in range(1, self.y-1):
+            row_coords = []
+            for coord in solution.game:
+                if coord[0] == y:
+                    row_coords.append(coord)
+            if row_coords:
+                ocupied = (1,y) if (1,y) in row_coords else False
+                for x in range(2,self.x-1):
+                    if (x,y) in row_coords and ocupied is False:
+                        solution.row_transitions += 1
+                        ocupied = True
+                    elif (x,y) not in row_coords and ocupied:
+                        solution.row_transitions += 1
+                        ocupied = False
+
+
+    def column_transitions(self, solution):game
+        solution.column_transitions = 0
+
+        for x in range(1, self.x-1):
+            column_coords = []
+            for coord in solution.game:
+                if coord[0] == x:
+                    column_coords.append(coord)
+            if column_coords:
+                ocupied = (x,self.y-1) if (x,self.y-1) in column_coords else False
+                for y in range(self.y-1,0):
+                    if (x,y) in column_coords and ocupied is False:
+                        solution.column_transitions += 1
+                        ocupied = True
+                    elif (x,y) not in column_coords and ocupied:
+                        solution.column_transitions += 1
+                        ocupied = False
     # DONE
     def checkScore(self, solution):
         
@@ -183,24 +265,32 @@ class Search:
                 ]
                 lines += 1
 
-        solution.score += lines ** 2
+        #solution.score += lines ** 2
+        solution.score += lines
 
 
     # DONE
     def checkHeight(self, solution):
 
+        #self.aggregate_height = 
+
         solution.sum_height = 0
+        #solution.block_weight = 0
+        #solution.altitude = [30,0]  # guarda a coluna com menor altitude e com a maior altitude
 
         # das colunas [1,8]
         for x in range(1, self.x-1):
-            column_coords = []
-            for coord in solution.game:
-                if coord[0] == x:
-                    column_coords.append(coord)
+            column_coords = [coord for coord in solution.game if coord[0] == x]
             solution.sum_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
+            """
+            if (self.y - min(column_coords, key = lambda coord: coord[1])[1]) < solution.altitude[0]:
+                solution.altitude[0] =  self.y - min(column_coords, key = lambda coord: coord[1])[1]
+            elif (self.y - min(column_coords, key = lambda coord: coord[1])[1]) > solution.altitude[1]:
+                solution.altitude[1] =  self.y - min(column_coords, key = lambda coord: coord[1])[1]
+            """
 
         # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
-
+        #solution.altitude_difference = solution.altitude[1] - solution.altitude[0]
 
     # DONE
     def checkHoleWeight(self, solution):
@@ -230,7 +320,7 @@ class Search:
         solution.bumpiness = 0
 
         # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
-        for x in range(1, self.x-1):
+        for x in range(1, self.x-2):
             this_column_coords = []
             for coord in solution.game:
                 if coord[0] == x:
