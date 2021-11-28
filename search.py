@@ -9,6 +9,7 @@ class Solution:
 
         self.shape = shape
         self.keys = []
+        self.heuristic = 0
 
 
 class Search:
@@ -31,8 +32,6 @@ class Search:
         self._bottom = [(i, 30) for i in range(10)]  # bottom
         self._lateral = [(0, i) for i in range(30)]  # left
         self._lateral.extend([(10 - 1, i) for i in range(30)])  # right
-
-
 
         self.shape = shape 
         self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
@@ -68,7 +67,7 @@ class Search:
 
                 # diferença entre a coluna atual e o min_x, para depois saber se ele vai para a esquerda, fica no meio ou vai para a direita
 
-                """
+                """ 
                 ATENÇÃO
 
                 O I vertical deve estar mal porque não vai para colunas que estão vazias no lado esquerdo!!!!!!!!!!!!!!!!!!!!
@@ -102,7 +101,7 @@ class Search:
 
             # enquanto há keys para serem premidas
             valid = True
-            while True:
+            while valid:
 
                 solution.shape.y += 1
 
@@ -131,7 +130,6 @@ class Search:
                         solution.shape.translate(shift, 0)
                         if not self.valid(solution):
                             valid = False
-                            break
 
                     if not keys:
                         break
@@ -142,9 +140,17 @@ class Search:
                 solution.game = deepcopy(self.game)
                 self.valid_solutions.append(solution)
 
-
         for valid_solution in self.valid_solutions:
 
+            height = self.aggregate_height(valid_solution)
+            score = self.score(valid_solution)
+            hole = self.holes(valid_solution)
+            bumpiness = self.bumpiness(valid_solution)
+            
+            valid_solution.heuristic = -0.510066 * height + 0.760666 * score + -0.35663 * hole + -0.184483 * bumpiness
+            print(valid_solution.heuristic)
+            # valid_solution.heuristic= 0.50 * height + 0.30 * -score + 0.15 * hole + 0.05 * bumpiness
+            
             # Pontuação ganha
             self.checkScore(valid_solution)
 
@@ -166,11 +172,8 @@ class Search:
     
 
         # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
-        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.hole_weight, x.bumpiness, x.sum_height))
-        self.solution = s[0]
-
-
-
+        self.solution = sorted(self.valid_solutions, key = lambda x: ( x.average_height, x.hole_weight, -x.score, x.bumpiness, x.sum_height))[0]
+        # self.solution = sorted(self.valid_solutions, key = lambda x: x.heuristic)[0]
 
 
 
@@ -276,6 +279,80 @@ class Search:
             solution.bumpiness += absolute_difference
         # Nota: quanto maior a bumpiness, pior a solução
 
+###############################################################################################
+
+
+    def aggregate_height(self, solution):
+        
+        aggregate_height = 0
+
+        for column in range(1, 9):
+            column_coords = [coord for coord in solution.game if coord[0] == column]
+            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
+                        
+        return aggregate_height
+
+        
+    def score(self, solution):
+
+        lines = 0
+
+        for item, count in Counter(y for _, y in solution.game).most_common():
+            if count == len(self._bottom) - 2:
+                lines += 1
+
+        return lines ** 2
+ 
+    def holes(self, solution):
+        # Para cada coluna, verificar as heuristicas descritas acima ^^
+
+        hole_weight = 0
+
+        for x in range(1, self.x-1):
+            column_coords = [ coord for coord in solution.game if coord[0] == x]
+            height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
+
+            # verificar se está bloqueado acima
+            for y in range(height+1,self.y):
+                if not ((x,y) in column_coords):
+                    hole_weight += 1
+            # verificar se tem, nas colunas adjacentes, blocos que estão ao seu lado
+            for y in range(0,self.y):
+                # se é um bloco vazio / buraco, verificar se existem blocos ao seu lado esquerdo e ao lado direito
+                if not ((x,y) in column_coords):
+                    # à esquerda
+                    if (x-1,y) in solution.game:
+                        hole_weight += 1
+                    if (x+1,y) in solution.game:
+                        hole_weight += 1
+
+        return hole_weight
+        #Nota: quanto maior a hole_weight, pior a solução
+
+    def bumpiness(self, solution):
+
+        bumpiness = 0
+
+        # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
+        for x in range(1, self.x-1):
+            this_column_coords = []
+            for coord in solution.game:
+                if coord[0] == x:
+                    this_column_coords.append(coord)
+            this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
+
+            next_column_coords = []
+            for coord in solution.game:
+                if coord[0] == x + 1:
+                    next_column_coords.append(coord)
+            next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
+
+            absolute_difference = abs(next_height - this_height)
+            bumpiness += absolute_difference
+            return bumpiness
+        
+    
+    #######################################################################################################
 
     # Verifica o quão baixo a peça vai ficar
     def checkLowestSolution(self, solution):
@@ -283,9 +360,7 @@ class Search:
         for coord in solution.shape.positions:
             solution.average_height += (self.y - coord[1])
         solution.average_height /= len(solution.shape.positions)
-
-
-
+        
 
     def valid(self, solution):
         return not any(
