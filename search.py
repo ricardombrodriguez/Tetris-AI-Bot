@@ -55,24 +55,14 @@ class Search:
 
             original.shape.rotate(step)
 
-            #original.keys = ["w"]*step
-
             # para calcular o numero de keys para chegar a uma determinada coluna
-            min_x = min(self.shape.positions, key=lambda coords: coords[0])[0]
+            min_x = min(original.shape.positions, key=lambda coords: coords[0])[0]
 
             # percorrer colunas [1,8]
             for x in range(1, self.x-1):
 
                 # nova instância para cada solução numa coluna duma rotação específica
                 solution = Solution(deepcopy(original))
-
-                # diferença entre a coluna atual e o min_x, para depois saber se ele vai para a esquerda, fica no meio ou vai para a direita
-
-                """
-                ATENÇÃO
-
-                O I vertical deve estar mal porque não vai para colunas que estão vazias no lado esquerdo!!!!!!!!!!!!!!!!!!!!
-                """
 
                 x_differential = x - min_x
 
@@ -159,15 +149,20 @@ class Search:
 
             self.checkLowestSolution(valid_solution)
 
+            valid_solution.heuristic = 100000*valid_solution.score - (200 * valid_solution.hole_weight + 200 * valid_solution.average_height + 50 * valid_solution.bumpiness + 200 * valid_solution.sum_height)
+            print(valid_solution.heuristic)
+
+            print("====================")
+            print()
 
         print("chegou ao final")
 
         #  solution.columns = [solution.score, solution.bumpiness, solution.sum_height, solution.hole_weight, solution.average_height]
     
 
-        # self.solution = min(self.valid_solutions, key = lambda x : x.average_height)
-        s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.hole_weight, x.bumpiness, x.sum_height))
-        self.solution = s[0]
+        self.solution = max(self.valid_solutions, key = lambda x : x.heuristic)
+        #s = sorted(self.valid_solutions, key = lambda x: (-x.score, x.average_height, x.hole_weight, x.bumpiness, x.sum_height))
+        #self.solution = s[0]
 
 
 
@@ -207,14 +202,6 @@ class Search:
         # Nota: Quanto maior for a coluna, menor vai ser o score. Assim, a solução que tiver colunas menos altas vai ter melhor score, para a heuristica
 
 
-    """
-    Como calcular o peso cumulativo dos buracos no jogo:
-    Uma célula/bloco vazio do jogo é um buraco quando:
-    - Está bloqueada, no seu topo, por um bloco ocupado ou por um buraco (uma célula vazia que também tem um bloco ocupado em cima dele)
-    - Está a uma altura menor ou igual da maior altura da coluna adjacente (seja esta a coluna da esquerda ou da direita)
-    - Nota: quanto mais em baixo estiverem os buracos, maior a sua classificação, uma vez que estes são mais dificeis de se remover
-    """
-
     # DONE
     def checkHoleWeight(self, solution):
         # Para cada coluna, verificar as heuristicas descritas acima ^^
@@ -229,25 +216,9 @@ class Search:
             height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
 
             # verificar se está bloqueado acima
-            severity = 3
             for y in range(height+1,self.y):
-                # espaço ocupado
-                if ((x,y) in column_coords):
-                    severity += 3
-                # espaço vazio (é buraco)
-                else:
-                    hole_weight += severity
-
-            severity = 1
-            # verificar se tem, nas colunas adjacentes, blocos que estão ao seu lado
-            for y in range(0,self.y):
-                # se é um bloco vazio / buraco, verificar se existem blocos ao seu lado esquerdo e ao lado direito
-                if not ((x,y) in column_coords):
-                    # à esquerda
-                    if (x-1,y) in solution.game:
-                        hole_weight += severity
-                    if (x+1,y) in solution.game:
-                        hole_weight += severity
+                if ((x,y) not in column_coords):
+                    hole_weight += 1
 
         solution.hole_weight = hole_weight
         #Nota: quanto maior a hole_weight, pior a solução
