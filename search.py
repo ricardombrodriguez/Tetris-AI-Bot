@@ -35,9 +35,7 @@ class Search:
 
         self.shape = shape 
         self.shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
-        self.possible_solutions = []
-        self.valid_solutions = []
-        self.best_solution = None
+        self.solution = None
 
         print("[SEARCH] Search inicializada")
 
@@ -46,25 +44,13 @@ class Search:
 
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
-
-        self.iter = 0
-
-        print()
-
         for i in range(0,len(self.shape.plan)):
-
 
             step = i
 
             original = Solution(deepcopy(self.shape))
 
-            print("shape inicial:")
-            print(original.shape.positions)
-
             original.shape.rotate(step)
-
-            print("shape:")
-            print(original.shape)
 
             # para calcular o numero de keys para chegar a uma determinada coluna
             min_x = min(original.shape.positions, key=lambda coords: coords[0])[0]
@@ -73,7 +59,7 @@ class Search:
             for x in range(1, self.x-1):
 
                 # nova instância para cada solução numa coluna duma rotação específica
-                solution = Solution(deepcopy(original))
+                solution = Solution(deepcopy(original.shape))
 
                 x_differential = x - min_x
 
@@ -87,71 +73,55 @@ class Search:
                 # depois de obter as keys, a ultima é sempre o "s"
                 solution.keys += ["s"]
 
-                print(solution.keys)
+                keys = solution.keys[:]
 
-                self.possible_solutions.append(solution)
+                # obter a shape com o estado inicial
+                solution = Solution(deepcopy(self.shape))
 
-        # AGORA, DEPOIS DE ADICIONAR TODAS AS SOLUTIONS ÀS POSSIBLE_SOLUTIONS, PODEMOS PERCORRER A LISTA DE KEYS DE CADA SOLUÇÃO
-        # SIMULAR O JOGO COM ESSAS KEYS E CALCULAR HEURISTICAS
-        for sol in self.possible_solutions:
+                # guardar as keys para chegar ao estado especifico dessa solução
+                solution.keys = deepcopy(keys)
 
-            keys = deepcopy(sol.keys)
+                # enquanto há keys para serem premidas
+                valid = True
+                while valid:
 
-            # obter a shape com o estado inicial
-            solution = Solution(deepcopy(self.shape))
+                    solution.shape.y += 1
 
-            # guardar as keys para chegar ao estado especifico dessa solução
-            solution.keys = deepcopy(keys)
+                    if self.valid(solution):
 
-            # enquanto há keys para serem premidas
-            valid = True
-            while valid:
+                        key = keys.pop(0)
 
-                solution.shape.y += 1
+                        if key == "s":
 
-                if self.valid(solution):
+                            while self.valid(solution):
+                                solution.shape.y +=1
+                            solution.shape.y -= 1
 
-                    key = keys.pop(0)
+                        elif key == "w":
+                            solution.shape.rotate()
+                            if not self.valid(solution):
+                                solution.shape.rotate(-1)
 
-                    if key == "s":
+                        elif key == "a":
+                            shift = -1
 
-                        while self.valid(solution):
-                            solution.shape.y +=1
-                        solution.shape.y -= 1
+                        elif key == "d":
+                            shift = +1
 
-                    elif key == "w":
-                        solution.shape.rotate()
-                        if not self.valid(solution):
-                            solution.shape.rotate(-1)
+                        if key in ["a", "d"]:
+                            solution.shape.translate(shift, 0)
+                            if not self.valid(solution):
+                                valid = False
 
-                    elif key == "a":
-                        shift = -1
+                        if not keys:
+                            break
 
-                    elif key == "d":
-                        shift = +1
+                # agora a peça já está repousada
 
-                    if key in ["a", "d"]:
-                        solution.shape.translate(shift, 0)
-                        if not self.valid(solution):
-                            valid = False
-
-                    if not keys:
-                        break
-
-            # agora a peça já está repousada
-
-            if valid:
-                solution.game = deepcopy(self.game) + solution.shape.positions
-                self.valid_solutions.append(solution)
-
-        for valid_solution in self.valid_solutions:
-            
-            state = valid_solution.game
-            valid_solution.heuristic = (self.checkHeight(state) * -0.510066) + (self.checkBumpiness(state) * -0.184483) + (self.checkHoles(state)* -0.35663) + (self.checkScore(state) * 0.555)
-
-
-        self.solution = max(self.valid_solutions, key = lambda x : x.heuristic)
-
+                if valid:
+                    solution.game = deepcopy(self.game) + solution.shape.positions
+                    solution.heuristic = self.heuristic(solution.game)
+                    self.solution = max([self.solution, solution], key = lambda x : x.heuristic) if self.solution else solution
 
 
     def valid(self, solution):
@@ -162,51 +132,69 @@ class Search:
         )
         
         
-    def columns_height(self, state):
-        high = [0]*8
-        for x, y in state:
-            if 30 - y > high[x - 1]:
-                high[x - 1] = 30 - y
-        return high
+    def checkHeight(self, solution):
+
+        aggregate_height = 0
+
+        # das colunas [1,8]
+        for x in range(1, self.x-1):
+            column_coords = [coord for coord in solution.game if coord[0] == x]
+            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
+
+        return aggregate_height
+
+    def checkBumpiness(self,solution):
         
-    def checkHeight(self, state):
-        return sum(self.columns_height(state))
-
-
-    def checkBumpiness(self,state):
         bumpiness = 0
-        high = self.columns_height(state)
-        
-        for i in range(len(high) - 1):
-            bumpiness += abs(high[i] - high[i+1])
-            
+
+        # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
+        for x in range(1, self.x-2):
+            this_column_coords = []
+            for coord in solution.game:
+                if coord[0] == x:
+                    this_column_coords.append(coord)
+            this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
+
+            next_column_coords = []
+            for coord in solution.game:
+                if coord[0] == x + 1:
+                    next_column_coords.append(coord)
+            next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
+
+            absolute_difference = abs(next_height - this_height)
+            solution.bumpiness += absolute_difference
+
         return bumpiness
+        # Nota: quanto maior a bumpiness, pior a solução
 
-    def checkHoles(self, state):
-        heights = self.columns_height(state)
-        holes = 0
-        
-        for i in range(8):
-            for y in range(30 - heights[i], 30):
-                if [i + 1, y] not in state:
-                    holes += 1
-                    
-        return holes
+    def checkHoles(self, solution):
 
-    def checkScore(self, state):
-        highest = max(self.columns_height(state))
-        score = 0
-        y = 30 - highest
-        x = 1
-        for i in range(y * 8):
-            coord_tmp = [x , y]
-            if coord_tmp in state:
-                x += 1
-            else:
-                y += 1
-                x = 1
-            if x == 8:
-                score += 1
-                x = 1
-                y += 1
-        return score
+        hole_weight = 0
+
+        for x in range(1, self.x-1):
+            column_coords = []
+            for coord in solution.game:
+                if coord[0] == x:
+                    column_coords.append(coord)
+            height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
+
+            # verificar se está bloqueado acima
+            for y in range(height+1,self.y):
+                if ((x,y) not in column_coords):
+                    hole_weight += 1
+
+        return hole_weight
+
+    def checkScore(self, solution):
+
+        lines = 0
+
+        for item, count in Counter(y for _, y in solution.game).most_common():
+            if count == len(self._bottom) - 2:
+                solution.game = [(x, y) for (x, y) in solution.game if y != item]  # remove row
+                solution.game = [
+                    (x, y + 1) if y < item else (x, y) for (x, y) in solution.game
+                ]
+                lines += 1
+
+        return lines
