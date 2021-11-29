@@ -46,13 +46,25 @@ class Search:
 
         # percorrer cada rotação possível primeiro. Porque, por exemplo, se tivermos a peça I deitada no inicio encostada à esquerda 
         # e rodarmos a mesma, esta não fica encostada logo à esquerda.
+
+        self.iter = 0
+
+        print()
+
         for i in range(0,len(self.shape.plan)):
+
 
             step = i
 
             original = Solution(deepcopy(self.shape))
 
+            print("shape inicial:")
+            print(original.shape.positions)
+
             original.shape.rotate(step)
+
+            print("shape:")
+            print(original.shape)
 
             # para calcular o numero de keys para chegar a uma determinada coluna
             min_x = min(original.shape.positions, key=lambda coords: coords[0])[0]
@@ -74,6 +86,8 @@ class Search:
 
                 # depois de obter as keys, a ultima é sempre o "s"
                 solution.keys += ["s"]
+
+                print(solution.keys)
 
                 self.possible_solutions.append(solution)
 
@@ -135,7 +149,6 @@ class Search:
             state = valid_solution.game
             valid_solution.heuristic = (self.checkHeight(state) * -0.510066) + (self.checkBumpiness(state) * -0.184483) + (self.checkHoles(state)* -0.35663) + (self.checkScore(state) * 0.555)
 
-        print("chegou ao final")
 
         self.solution = max(self.valid_solutions, key = lambda x : x.heuristic)
 
