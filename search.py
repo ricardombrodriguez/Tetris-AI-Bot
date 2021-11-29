@@ -120,7 +120,7 @@ class Search:
 
                 if valid:
                     solution.game = deepcopy(self.game) + solution.shape.positions
-                    solution.heuristic = self.heuristic(solution.game)
+                    solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
                     self.solution = max([self.solution, solution], key = lambda x : x.heuristic) if self.solution else solution
 
 
@@ -162,7 +162,7 @@ class Search:
             next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
 
             absolute_difference = abs(next_height - this_height)
-            solution.bumpiness += absolute_difference
+            bumpiness += absolute_difference
 
         return bumpiness
         # Nota: quanto maior a bumpiness, pior a solução
