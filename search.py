@@ -95,6 +95,9 @@ class Search:
 
                             while self.valid(solution):
                                 solution.shape.y +=1
+                                if solution.shape.y > 30:
+                                    valid = False
+                                    break
                             solution.shape.y -= 1
 
                         elif key == "w":
@@ -125,6 +128,7 @@ class Search:
 
 
     def valid(self, solution):
+        print(">>", solution.shape.positions)
         return not any(
             [piece_part in self.grid for piece_part in solution.shape.positions]
         ) and not any(
