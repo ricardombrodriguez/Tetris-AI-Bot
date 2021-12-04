@@ -9,18 +9,12 @@ class Solution:
 
         self.shape = shape
         self.keys = []
-        self.heuristic = 0
 
 
 class Search:
 
     def __init__(self, state, shape, initial_info, next_shape): 
 
-        #self.state = state
-        
-        # talvez mudar a estrutura para suportar listas e ser mais rapido
-
-        # OPERAÇÕES COM SETS SÃO MAIS RÁPIDAS DO QUE COM LISTAS NORMAIS (EX: O "IN")
         self.game = set()
         for tup in state['game']:
             self.game.add((tup[0], tup[1]))
@@ -80,8 +74,6 @@ class Search:
 
                 # guardar as keys para chegar ao estado especifico dessa solução
                 solution.keys = [*keys]
-
-                # enquanto há keys para serem premidas
                 
                 while self.valid(solution):
 
@@ -90,10 +82,8 @@ class Search:
                     key = keys.pop(0)
                                                 
                     if key == "s":
-
-                        # usar outra função mais rapida que evite um loop
                         
-                        while self.valid(solution): # fica stuck aqui 
+                        while self.valid(solution):
                             solution.shape.y +=1
                             
                         solution.shape.y -= 1
@@ -113,17 +103,25 @@ class Search:
                     if not keys:
                         break
                     
-                 
-                # agora a peça já está repousada
-                solution.game = [*self.game] + solution.shape.positions
-                solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
+                solution.game = set(self.game).union(set(solution.shape.positions))
+
+
+                if self.biggestHeight(solution) > 20:
+                    solution.heuristic = (-1.02 * self.checkLowestSolution(solution) + self.checkHeight(solution) * -0.710066) + (self.checkBumpiness(solution) * -0.784483) + (self.checkHoles(solution)* - 0.35663) + (self.checkScore(solution) * 0.855)
+                else:
+                    solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
+
+                #solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
+                #solution.heuristic = (self.checkHeight(solution) * -0.798752914564018) + (self.checkBumpiness(solution) * -0.164626498034284) + (self.checkHoles(solution)* -0.24921408023878) + (self.checkScore(solution) * 0.522287506868767)
                 self.solution = max([self.solution, solution], key = lambda x : x.heuristic) if self.solution else solution
 
                 # calcular outras heuristicas para outros thresholds
 
-        #print("end")
 
-    # verificar se há uma forma mais rapida de fazer esta verificação 
+    def biggestHeight(self,solution):
+
+        return self.y - min(list(solution.game), key = lambda coord : coord[1])[1]
+
     def valid(self, solution):
         
         return not any(
@@ -132,11 +130,21 @@ class Search:
             {piece_part in self.game for piece_part in solution.shape.positions}
         )
 
+
+    def checkLowestSolution(self, solution):
+
+        average_height = 0
+        for coord in solution.shape.positions:
+            average_height += (self.y - coord[1])
+        average_height /= len(solution.shape.positions)
+        return average_height
+
+    
+
     def checkHeight(self, solution):
 
         aggregate_height = 0
 
-        # das colunas [1,8]
         for x in range(1, self.x-1):
             column_coords = {coord for coord in solution.game if coord[0] == x}
             aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]
@@ -147,8 +155,6 @@ class Search:
         
         bumpiness = 0
         
-        # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
-        #start = time.time()
         for x in range(1, self.x-2):
             this_column_coords = set()
             next_column_coords = set()
@@ -158,39 +164,32 @@ class Search:
                     this_column_coords.add(coord)
                 elif coord[0] == x+1:
                     next_column_coords.add(coord)
-                #this_height = coord[1] if coord[1] > height else height  # descobre o topo da coluna
             
             this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
             next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
 
             absolute_difference = abs(next_height - this_height)
             bumpiness += absolute_difference 
-            
-        #end = time.time()
-        #print(round((end-start)/(10**-6)))
+
         return bumpiness
-        # Nota: quanto maior a bumpiness, pior a solução
 
     def checkHoles(self, solution):
 
         hole_weight = 0
         height = self.y
 
-        #start = time.time()
         for x in range(1, self.x-1):
             column_coords = set()
             for coord in solution.game: 
                 if coord[0] == x:
                     column_coords.add(coord)
-            #    height = coord[1] if coord[1] > height else height  # descobre o topo da coluna
             
             height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
-            # verificar se está bloqueado acima
+
             for y in range(height+1,self.y):
                 if ((x,y) not in column_coords):
                         hole_weight += 2
-        # end = time.time()
-        # print(round((end-start)/(10**-6)))
+
         return hole_weight
 
     def checkScore(self, solution):
