@@ -18,7 +18,7 @@ logger_websockets.setLevel(logging.WARN)
 logger = logging.getLogger("Viewer")
 logger.setLevel(logging.DEBUG)
 
-BLOCK_SIDE = 30
+BLOCK_SIDE = 24
 BLOCK_SIZE = BLOCK_SIDE, BLOCK_SIDE
 
 COLORS = {

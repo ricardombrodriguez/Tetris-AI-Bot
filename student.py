@@ -38,8 +38,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     )
                 
                 # Peça recebida
-                piece = state['piece']
-                next_piece = state['next_pieces'][0]    # apenas a prineira peça
+                if 'piece' in state.keys():
+                    piece = state['piece']
+                    next_piece = state['next_pieces'][0]    # apenas a prineira peça
+                    
+                else:
+                    piece = None
                 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:

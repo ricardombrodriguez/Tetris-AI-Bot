@@ -158,8 +158,8 @@ class Search:
 
             absolute_difference = abs(next_height - this_height)
             
-            if absolute_difference > 6:
-                absolute_difference *= 50
+            if absolute_difference > 4:
+                absolute_difference *= 30
             bumpiness += absolute_difference 
             
         #end = time.time()
@@ -184,8 +184,10 @@ class Search:
             for y in range(height+1,self.y):
                 if ((x,y) not in column_coords):
                         hole_weight += 2
+
         # end = time.time()
         # print(round((end-start)/(10**-6)))
+
         return hole_weight
 
     def checkScore(self, solution):
