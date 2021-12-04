@@ -37,7 +37,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
                 # Peça recebida
-                piece = state['piece']
+                if 'piece' in state.keys():
+                    piece = state['piece']
+                else:
+                    piece = None
 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:

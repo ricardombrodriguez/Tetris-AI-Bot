@@ -128,7 +128,7 @@ class Search:
 
 
     def valid(self, solution):
-        print(">>", solution.shape.positions)
+        # print(solution.shape.positions)
         return not any(
             [piece_part in self.grid for piece_part in solution.shape.positions]
         ) and not any(
