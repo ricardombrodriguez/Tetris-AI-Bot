@@ -20,15 +20,16 @@ class Search:
         
         # talvez mudar a estrutura para suportar listas e ser mais rapido
 
-        self.game = []
+        # OPERAÇÕES COM SETS SÃO MAIS RÁPIDAS DO QUE COM LISTAS NORMAIS (EX: O "IN")
+        self.game = set()
         for tup in state['game']:
-            self.game.append((tup[0], tup[1]))
+            self.game.add((tup[0], tup[1]))
         
         self.coords = state['piece']  
 
-        self.grid = []
+        self.grid = set()
         for coord in initial_info['grid']:
-           self.grid.append((coord[0], coord[1]))
+           self.grid.add((coord[0], coord[1]))
 
         self.x = max(self.grid, key = lambda coord : coord[0])[0] + 1
         self.y = max(self.grid, key = lambda coord : coord[1])[1]
@@ -51,12 +52,16 @@ class Search:
             
             # para calcular o numero de keys para chegar a uma determinada coluna
             min_x = min(original.shape.positions, key=lambda coords: coords[0])[0]
-            #max_x = max(original.shape.positions, key=lambda coords: coords[0])[0]
-  
+            max_x = max(original.shape.positions, key=lambda coords: coords[0])[0]
+
             # percorrer colunas [1,8]
             for x in range(1, self.x-1):
 
                 x_differential = x - min_x
+
+                # dispensa soluções não válidas
+                if (x_differential + max_x >= self.x - 1):
+                    break
 
                 keys = []
 
@@ -88,7 +93,7 @@ class Search:
 
                         # usar outra função mais rapida que evite um loop
                         
-                        while self.valid(solution): # fica stuck aqui pqp
+                        while self.valid(solution): # fica stuck aqui 
                             solution.shape.y +=1
                             
                         solution.shape.y -= 1
@@ -118,14 +123,13 @@ class Search:
 
         #print("end")
 
-
     # verificar se há uma forma mais rapida de fazer esta verificação 
     def valid(self, solution):
         
         return not any(
-            [piece_part in self.grid for piece_part in solution.shape.positions]
+            {piece_part in self.grid for piece_part in solution.shape.positions}
         ) and not any(
-            [piece_part in self.game for piece_part in solution.shape.positions]
+            {piece_part in self.game for piece_part in solution.shape.positions}
         )
 
     def checkHeight(self, solution):
@@ -134,7 +138,7 @@ class Search:
 
         # das colunas [1,8]
         for x in range(1, self.x-1):
-            column_coords = [coord for coord in solution.game if coord[0] == x]
+            column_coords = {coord for coord in solution.game if coord[0] == x}
             aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]
             
         return aggregate_height
@@ -146,14 +150,14 @@ class Search:
         # ir de 0 até 8, porque o 8 ja compara com a 9º coluna
         #start = time.time()
         for x in range(1, self.x-2):
-            this_column_coords = []
-            next_column_coords = []
+            this_column_coords = set()
+            next_column_coords = set()
             
             for coord in solution.game:
                 if coord[0] == x:
-                    this_column_coords.append(coord)
+                    this_column_coords.add(coord)
                 elif coord[0] == x+1:
-                    next_column_coords.append(coord)
+                    next_column_coords.add(coord)
                 #this_height = coord[1] if coord[1] > height else height  # descobre o topo da coluna
             
             this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
@@ -174,10 +178,10 @@ class Search:
 
         #start = time.time()
         for x in range(1, self.x-1):
-            column_coords = []
+            column_coords = set()
             for coord in solution.game: 
                 if coord[0] == x:
-                    column_coords.append(coord)
+                    column_coords.add(coord)
             #    height = coord[1] if coord[1] > height else height  # descobre o topo da coluna
             
             height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
@@ -195,10 +199,10 @@ class Search:
         
         for item, count in Counter(y for _, y in solution.game).most_common():
             if count == self.x - 2:
-                solution.game = [(x, y) for (x, y) in solution.game if y != item]  # remove row
-                solution.game = [
+                solution.game = {(x, y) for (x, y) in solution.game if y != item}  # remove row
+                solution.game = {
                     (x, y + 1) if y < item else (x, y) for (x, y) in solution.game
-                ]
+                }
                 lines += 1
 
         return lines
