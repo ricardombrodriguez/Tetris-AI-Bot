@@ -19,7 +19,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
         print(initial_info)
-        print("INICIO")
+        #print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
         keys = []
@@ -32,27 +32,30 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
                 if keys:
-                    print(keys[0])
+                    #print(keys[0])
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
+                
                 # Peça recebida
                 if 'piece' in state.keys():
                     piece = state['piece']
+                    next_piece = state['next_pieces'][0]    # apenas a prineira peça
                 else:
-                    piece = None
-
+                    piece = None                
+                
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
                     new_piece = True
-
                 else:
 
                     # Encontrar a melhor solução para a nova peça
                     if new_piece is True:
 
                         current_shape = findShape(piece)
-                        s = Search(state,current_shape,initial_info)
+                        next_shape = findShape(next_piece)
+                        s = Search(state,current_shape,initial_info, next_shape)
+                        #s = Search(state,current_shape,initial_info)
                         s.search()
                         keys = s.solution.keys
                         new_piece = False
@@ -61,18 +64,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 print("Server has cleanly disconnected us")
                 return
 
-# Esta função tem como objetivo encontrar qual é a melhor posição para a peça atual encaixar no jogo. 
-# Ela guarda esta informação para depois, por cada iteração, saber qual é a key que deve ser pressionada.
-def solution(state):
-    pass
-
-# A partir da solução obtida, retornar a key que é preciso premir para chegar à solução
-def searchKey():
-    pass
-
-# Search the shape (FUNÇÃO ESTÁ MAL)
+# Search the shape 
 # SHAPES = [Shape(s) for s in [S, Z, I, O, J, T, L]]
-# ESTE MÉTODO N FUNCIONA PORQUE VARIAS SHAPES TEM A DIFERENÇA IGUAL, CORRIGIR ISTO AMANHÃ
 def findShape(piece):
 
     #S (done)
@@ -104,7 +97,6 @@ def findShape(piece):
 
     #O (done)
     elif piece[0][0] == piece[2][0] and piece[0][1] == piece[1][1] and piece[1][0] == piece[3][0] and piece[2][1] == piece[3][1]:
-        print("its O")
         return Shape(O)
 
     #J (done acho)
@@ -133,13 +125,6 @@ def findShape(piece):
         l = Shape(L)
         l.rotate(1)
         return l
-
-    else:
-        print("n deu")
-
-
-
-
 
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
