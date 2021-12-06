@@ -22,10 +22,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         #print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
-        keys = []
-
-
+        keys = []   # isto pode ser um array de arrays, cada sub-array é o conjunto de chaves para uma das peças especificas no lookahead
+        first_piece = True  #quando está é true, temos de usar o search() e calcular as keys consoante o lookahead
+        all_keys = []
+        
         while True:
+
             try:
                 state = json.loads(
                     await websocket.recv()
@@ -33,32 +35,67 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if keys:
                     #print(keys[0])
+                    """
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
+                    """
+                    print("KEY:", keys)
+                    await websocket.send(
+                        json.dumps({"cmd": "key", "key": keys.pop(0)})   
+                    )
+
                 
                 # Peça recebida
-                if 'piece' in state.keys():
+                if 'piece' in state:
                     piece = state['piece']
                     next_piece = state['next_pieces'][0]    # apenas a prineira peça
                 else:
-                    piece = None                
+                    piece = None
                 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
                     new_piece = True
+
+                # Nova peça
                 else:
 
                     # Encontrar a melhor solução para a nova peça
-                    if new_piece is True:
+                    if new_piece and first_piece:
 
                         current_shape = findShape(piece)
                         next_shape = findShape(next_piece)
-                        s = Search(state,current_shape,initial_info, next_shape)
-                        #s = Search(state,current_shape,initial_info)
+                        s = Search(state,current_shape,initial_info,next_shape)
                         s.search()
-                        keys = s.solution.keys
+
+                        #keys = s.solution.keys
+                        # o search() tem de retornar uma lista de listas, em que cada sublista é as keys de uma peça especifica
+
+                        current_keys = s.solution[0].keys
+                        next_keys = s.solution[1].keys
+                        
+                        all_keys = [current_keys, next_keys]
+                        
+                        print()
+                        print(current_keys, next_keys)
+                        
+                        keys = all_keys.pop(0)
+
                         new_piece = False
+                        first_piece = False
+    
+                    # Caso a peça faça parte do lookahead de uma peça anterior (só verifica se keys existe porque o pop das keys ja acontece acima)
+                    elif new_piece and not first_piece:
+
+                        # se todas as chaves/keys do lookahead já foram enviadas, então acabou e a próxima peça recebida vai fazer o search
+                        if not all_keys:
+                            first_piece = True
+                            
+                        else:
+                            keys = all_keys.pop(0)
+                            print("new keys:", keys)
+
+
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
