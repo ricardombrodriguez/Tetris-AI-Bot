@@ -40,7 +40,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
                     """
-                    print("KEY:", keys)
+                    print("KEY PRESSED:", keys[0])
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})   
                     )
@@ -58,10 +58,23 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     new_piece = True
 
                 # Nova peça
-                else:
+                elif new_piece:    
+                    print(all_keys)
+                    # Caso a peça faça parte do lookahead de uma peça anterior (só verifica se keys existe porque o pop das keys ja acontece acima)
+                    if not first_piece:
 
+                        # se todas as chaves/keys do lookahead já foram enviadas, então acabou e a próxima peça recebida vai fazer o search
+                        if not all_keys:
+                            print("A ratisse entrou")
+                            first_piece = True
+                            
+                        else:
+                            new_piece = False
+                            keys = all_keys.pop(0)
+                            print("new keys:", keys)
+                            
                     # Encontrar a melhor solução para a nova peça
-                    if new_piece and first_piece:
+                    elif first_piece:
 
                         current_shape = findShape(piece)
                         next_shape = findShape(next_piece)
@@ -77,23 +90,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         all_keys = [current_keys, next_keys]
                         
                         print()
+                        print("--- novas 2 peças ---")
                         print(current_keys, next_keys)
                         
                         keys = all_keys.pop(0)
 
                         new_piece = False
                         first_piece = False
-    
-                    # Caso a peça faça parte do lookahead de uma peça anterior (só verifica se keys existe porque o pop das keys ja acontece acima)
-                    elif new_piece and not first_piece:
-
-                        # se todas as chaves/keys do lookahead já foram enviadas, então acabou e a próxima peça recebida vai fazer o search
-                        if not all_keys:
-                            first_piece = True
-                            
-                        else:
-                            keys = all_keys.pop(0)
-                            print("new keys:", keys)
 
 
 

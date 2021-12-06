@@ -118,6 +118,7 @@ class Search:
                     #solution.heuristic = (self.checkHeight(solution) * -0.798752914564018) + (self.checkBumpiness(solution) * -0.164626498034284) + (self.checkHoles(solution)* -0.24921408023878) + (self.checkScore(solution) * 0.522287506868767)
         
         all_solutions = []
+        valid_solution = False
         
         for sol in possible_sol:
             
