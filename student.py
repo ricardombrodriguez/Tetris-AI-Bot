@@ -49,7 +49,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 # Peça recebida
                 if 'piece' in state:
                     piece = state['piece']
-                    next_piece = state['next_pieces'][0]    # apenas a prineira peça
+                    next_pieces = state['next_pieces']    # apenas a prineira peça
                 else:
                     piece = None
                 
@@ -64,8 +64,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if new_piece and first_piece:
 
                         current_shape = findShape(piece)
-                        next_shape = findShape(next_piece)
-                        s = Search(state,current_shape,initial_info,next_shape)
+                        next_shapes = [findShape(shape) for shape in next_pieces]
+                        shapes = [current_shape] + next_shapes
+                        s = Search(state,initial_info,shapes)
                         s.search()
 
                         #keys = s.solution.keys
