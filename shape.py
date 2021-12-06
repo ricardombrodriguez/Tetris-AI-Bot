@@ -27,6 +27,7 @@ Z = "Z", [
      "....."],
 ]
 
+    
 I = "I", [
     ["..1..", 
      "..1..", 
@@ -173,6 +174,7 @@ class Shape:
         return self.__str__()
 
 SHAPES = [Shape(s) for s in [S, Z, I, O, J, T, L]]
+
 
 if __name__ == "__main__":
     s = Shape(S)

@@ -106,8 +106,10 @@ class Search:
                 solution.game = set(self.game).union(set(solution.shape.positions))
 
 
-                if self.biggestHeight(solution) > 20:
-                    solution.heuristic = (-1.02 * self.checkLowestSolution(solution) + self.checkHeight(solution) * -0.710066) + (self.checkBumpiness(solution) * -0.784483) + (self.checkHoles(solution)* - 0.35663) + (self.checkScore(solution) * 0.855)
+                if self.biggestHeight(solution) > 0:
+                    print("ui")
+                    solution.heuristic = (self.checkLowestSolution(solution) * - 20 ) + (self.checkHeight(solution) * -1.410066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -2.65663) + (self.checkScore(solution) * 100)
+                    #solution.heuristic = (self.checkLowestSolution(solution) * - 100 ) + (self.checkHeight(solution) * -1.410066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.65663) + (self.checkScore(solution) * 100)
                 else:
                     solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
 
@@ -138,7 +140,6 @@ class Search:
             average_height += (self.y - coord[1])
         average_height /= len(solution.shape.positions)
         return average_height
-
     
 
     def checkHeight(self, solution):
