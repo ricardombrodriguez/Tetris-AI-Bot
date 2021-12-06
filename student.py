@@ -19,7 +19,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
         print(initial_info)
-        #print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
         keys = []
@@ -40,7 +39,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 # Peça recebida
                 if 'piece' in state.keys():
                     piece = state['piece']
-                    next_piece = state['next_pieces'][0]    # apenas a prineira peça
+                    next_pieces = state['next_pieces']    # apenas a prineira peça
                     
                 else:
                     piece = None
@@ -54,8 +53,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if new_piece is True:
 
                         current_shape = findShape(piece)
-                        next_shape = findShape(next_piece)
-                        s = Search(state,current_shape,initial_info, next_shape)
+                        next_shapes = [findShape(next_piece) for next_piece in next_pieces]
+                        s = Search(state,current_shape,initial_info, next_shapes)
                         #s = Search(state,current_shape,initial_info)
                         s.search()
                         keys = s.solution.keys
