@@ -28,16 +28,25 @@ class Search:
 
         self.shapes = shapes
         for shape in self.shapes:
-            shape.set_pos((self.x - self.shape.dimensions.x) / 2, 0) 
+            shape.set_pos((self.x - shape.dimensions.x) / 2, 0) 
 
         self.solutions = None
+
+        self.iter = 0
+
+        print(self.shapes[0])
+        print(self.shapes[1])
 
     # solutions -> array de soluções-pai
     def search(self, solutions=[]):
 
-        for rot in range(0, len(self.shape.plan)):
+        iteration = 0 if not solutions else len(solutions)  # numero da peça que estamos a ver agora
+        print(iteration)
 
-            iteration = 0 if not solutions else len(solutions)  # numero da peça que estamos a ver agora
+        for rot in range(0, len(self.shapes[iteration].plan)):
+
+            print("rotação", rot)
+
             piece = copy(self.shapes[iteration])
             piece.rotate(rot)
             
@@ -47,6 +56,8 @@ class Search:
 
             # percorrer colunas [1,8]
             for x in range(1, self.x-1):
+
+                print("x: ", x)
 
                 x_differential = x - min_x
 
@@ -71,6 +82,7 @@ class Search:
 
                 # guardar as keys para chegar ao estado especifico dessa solução
                 solution.keys = [*keys]
+                solution.solutions = [*solutions]
 
                 valid_solution = False
                 while self.valid(solution):
@@ -104,22 +116,35 @@ class Search:
                     
                 if valid_solution:
 
-                    last_solution = solutions[-1] if solutions else self.game
-                    solution.game = set(last_solution.game).union(set(solution.shape.positions))
+                    last_solution_game = solutions[-1].game if solutions else self.game
+                    """
+                    print("last solution:")
+                    print(last_solution_game)
+                    """
+                    solution.game = set(last_solution_game).union(set(solution.shape.positions))
+                    """
+                    print("now:")
+                    print(solution.game)
+                    print()
+                    """
                     solution.score = self.checkScore(solution)
-                    solutions.append(solution)
 
-                    if len(solutions) == len(self.shapes):
+                    solution.solutions.append(solution)
+
+                    if len(solution.solutions) == len(self.shapes):
                         # acabou, ver as heuristicas todas
 
-                        solutions.solutions = [*solutions]
-                        sum_rows = sum([self.checkScore(sol) for sol in solutions.solutions])
-                        solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (sum_rows * 0.555)
+                        #print("ACABOU!!!!!")
+
+                        #sum_rows = sum([self.checkScore(sol) for sol in solution.solutions])
+                        #solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
+                        solution.heuristic = sum([self.checkHeight(sol) * -0.510066 + self.checkBumpiness(sol) * -0.184483 + \
+                                                  self.checkHoles(sol)* -0.35663 + self.checkScore(sol) * 0.555 \
+                                                  for sol in solution.solutions])
                         self.solution = max([self.solutions, solution], key = lambda sol : sol.heuristic ) if self.solutions else solution
-
-                        return
-
-                    self.search(solutions)
+                    else:
+                        print("===")
+                        self.search(solution.solutions)
 
 
     def biggestHeight(self,solution):
@@ -127,10 +152,11 @@ class Search:
 
 
     def valid(self, solution):
+        game = solution.solutions[-1].game if solution.solutions else self.game
         return not any(
             {piece_part in self.grid for piece_part in solution.shape.positions}
         ) and not any(
-            {piece_part in self.game for piece_part in solution.shape.positions}
+            {piece_part in game for piece_part in solution.shape.positions}
         )
         
     def next_valid(self, game, solution):
