@@ -40,7 +40,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
                     """
-                    print("KEY PRESSED:", keys[0])
+                    #print("KEYS:", keys)
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})   
                     )
@@ -58,49 +58,38 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     new_piece = True
 
                 # Nova peça
-                elif new_piece:    
-                    print(all_keys)
+                elif new_piece:
                     # Caso a peça faça parte do lookahead de uma peça anterior (só verifica se keys existe porque o pop das keys ja acontece acima)
                     if not first_piece:
 
                         # se todas as chaves/keys do lookahead já foram enviadas, então acabou e a próxima peça recebida vai fazer o search
                         if not all_keys:
-                            print("A ratisse entrou")
                             first_piece = True
                             
                         else:
                             new_piece = False
                             keys = all_keys.pop(0)
-                            print("new keys:", keys)
                             
                     # Encontrar a melhor solução para a nova peça
                     elif first_piece:
 
                         current_shape = findShape(piece)
                         next_shapes = [findShape(shape) for shape in next_pieces]
+                        #shapes = [current_shape] + [next_shapes[0]]
                         shapes = [current_shape] + [next_shapes[0]]
-                        print("vai calcular....")
                         s = Search(state,initial_info,shapes)
+                        print("começou o search")
                         s.search()
+                        print("acabou o search....")
+                        print()
 
                         #keys = s.solution.keys
                         # o search() tem de retornar uma lista de listas, em que cada sublista é as keys de uma peça especifica
 
                         #current_keys = s.solution[0].keys
                         #next_keys = s.solution[1].keys
-                        
-                        print("numero de iterações")
-                        print(s.iter)
-
-                        print("posições das peças")
-                        for shape in s.solution.solutions:
-                            print(shape.shape.positions)
-
-                        all_keys = [sol.keys for sol in s.solution.solutions]
-                        
-                        print()
-                        print("--- novas 4 peças ---")
-                        print(all_keys)
+            
+                        all_keys = [sol.keys for sol in s.best_solution.solutions]
                         
                         keys = all_keys.pop(0)
 

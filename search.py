@@ -5,7 +5,7 @@ from shape import *
 # uma das soluções
 class Solution:
 
-    def __init__(self, shape): 
+    def __init__(self, shape):
 
         self.shape = shape
 
@@ -29,23 +29,23 @@ class Search:
         self.shapes = shapes
         for shape in self.shapes:
             shape.set_pos((self.x - shape.dimensions.x) / 2, 0) 
+            print(shape)
 
-        self.solutions = None
+        self.best_solution = None
 
         self.iter = 0
-
-        print(self.shapes[0])
-        print(self.shapes[1])
 
     # solutions -> array de soluções-pai
     def search(self, solutions=[]):
 
         iteration = 0 if not solutions else len(solutions)  # numero da peça que estamos a ver agora
-        print(iteration)
+
+        # if self.iter == 3:
+        #     exit()
+        
+        self.iter += 1
 
         for rot in range(0, len(self.shapes[iteration].plan)):
-
-            print("rotação", rot)
 
             piece = copy(self.shapes[iteration])
             piece.rotate(rot)
@@ -56,8 +56,6 @@ class Search:
 
             # percorrer colunas [1,8]
             for x in range(1, self.x-1):
-
-                print("x: ", x)
 
                 x_differential = x - min_x
 
@@ -115,35 +113,31 @@ class Search:
                         break
                     
                 if valid_solution:
-
+                
                     last_solution_game = solutions[-1].game if solutions else self.game
-                    """
-                    print("last solution:")
-                    print(last_solution_game)
-                    """
                     solution.game = set(last_solution_game).union(set(solution.shape.positions))
-                    """
-                    print("now:")
-                    print(solution.game)
-                    print()
-                    """
                     solution.score = self.checkScore(solution)
 
                     solution.solutions.append(solution)
 
                     if len(solution.solutions) == len(self.shapes):
+                        
                         # acabou, ver as heuristicas todas
 
-                        #print("ACABOU!!!!!")
+                        all_scores = [self.checkScore(sol) for sol in solution.solutions]
+                        score = sum(all_scores)
 
-                        #sum_rows = sum([self.checkScore(sol) for sol in solution.solutions])
-                        #solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
-                        solution.heuristic = sum([self.checkHeight(sol) * -0.510066 + self.checkBumpiness(sol) * -0.184483 + \
+                        all_heuristics = [self.checkHeight(sol) * -0.510066 + self.checkBumpiness(sol) * -0.184483 + \
                                                   self.checkHoles(sol)* -0.35663 + self.checkScore(sol) * 0.555 \
-                                                  for sol in solution.solutions])
-                        self.solution = max([self.solutions, solution], key = lambda sol : sol.heuristic ) if self.solutions else solution
+                                                  for sol in solution.solutions]
+                        solution.heuristic = sum(all_heuristics)
+
+                        #solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + score * 0.555
+                        #solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + self.checkScore(solution) * 0.555
+                        #solution.heuristic = sum(all_heuristics)
+                        self.best_solution = max([self.best_solution, solution], key = lambda sol : sol.heuristic ) if self.best_solution else solution
+
                     else:
-                        print("===")
                         self.search(solution.solutions)
 
 
@@ -158,14 +152,6 @@ class Search:
         ) and not any(
             {piece_part in game for piece_part in solution.shape.positions}
         )
-        
-    def next_valid(self, game, solution):
-        return not any(
-            {piece_part in self.grid for piece_part in solution.shape.positions}
-        ) and not any(
-            {piece_part in game for piece_part in solution.shape.positions}
-        )
-
 
     def checkLowestSolution(self, solution):
         average_height = 0
