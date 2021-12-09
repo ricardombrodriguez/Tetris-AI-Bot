@@ -29,7 +29,7 @@ class Search:
         self.iter = 0
 
         self.best_nodes = []    # soluções finais
-        self.max_nodes = 5
+        self.max_nodes = 8
 
     # Breadth-first
     def search(self, solutions=[]):
@@ -37,6 +37,11 @@ class Search:
         iteration = 0 if not solutions else len(solutions)  # numero da peça que estamos a ver agora
 
         best_nodes = []
+
+        self.iter += 1
+
+        print(iteration)
+        print(self.shapes)
 
         for rot in range(0, len(self.shapes[iteration].plan)):
 
@@ -58,7 +63,7 @@ class Search:
 
                 keys = ["w"]*rot
 
-                keys += ["a"]*abs(x_differential) + ["s"] if x_differential > 0 else ["d"]*abs(x_differential) + ["s"]
+                keys += ["a"]*abs(x_differential) + ["s"] if x_differential < 0 else ["d"]*abs(x_differential) + ["s"]
 
                 # obter a shape com o estado inicial
                 solution = Solution(copy(self.shapes[iteration]))
@@ -99,7 +104,7 @@ class Search:
                         break
                     
                 if valid_solution:
-                
+
                     last_solution_game = solutions[-1].game if solutions else self.game
                     solution.game = set(last_solution_game).union(set(solution.shape.positions))
                     
@@ -107,22 +112,26 @@ class Search:
                     solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + self.checkScore(solution) * 0.555 
                     best_nodes.append(solution)
 
-                    self.iter += 1
-
                     if len(solution.solutions) == len(self.shapes):
 
                         all_heuristics = [ sol.heuristic for sol in solution.solutions]
                         solution.heuristic = sum(all_heuristics)
                         self.best_nodes.append(solution)    #adicionar nó terminal à lista de soluções possíveis
 
-        if len(solution.solutions) != len(self.shapes) - 1:   
+        print("sol.solutions: ", len(solution.solutions))
+        if len(solution.solutions) != len(self.shapes):  
+
+            print("best nodes") 
+
             best_nodes = sorted(best_nodes, key=lambda node: node.heuristic, reverse=True)[:self.max_nodes]
             
             for node in best_nodes:
+                if len(node.solutions) == 2:
+                    print("n_solutions", len(node.solutions))
+                    print(node.solutions)
                 self.search(node.solutions)
         
         if not solutions:
-            print("CALCULAR MELHOR SOLUÇÃO")
             self.best_solution = max(self.best_nodes, key = lambda sol : sol.heuristic)
 
 
