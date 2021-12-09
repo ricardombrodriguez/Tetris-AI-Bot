@@ -28,19 +28,20 @@ class Search:
         self.iter = 0
 
         self.best_nodes = []    # soluções finais
-        self.max_nodes = 8
+        self.max_nodes = 5
 
     # Breadth-first
     def search(self, solutions=[]):
 
         iteration = 0 if not solutions else len(solutions)  # numero da peça que estamos a ver agora
 
+        print(iteration)
+        if iteration == 0:
+            print(self.shapes)
+
         best_nodes = []
 
-        self.iter += 1
-
-        print(iteration)
-        print(self.shapes)
+        print(self.shapes[iteration])
 
         for rot in range(0, len(self.shapes[iteration].plan)):
 
@@ -70,6 +71,8 @@ class Search:
                 # guardar as keys para chegar ao estado especifico dessa solução
                 solution.keys = [*keys]
                 solution.solutions = [*solutions]
+
+                self.iter += 1
 
                 valid_solution = False
                 while self.valid(solution):
@@ -107,6 +110,7 @@ class Search:
                     solution.game = set(last_solution_game).union(set(solution.shape.positions))
                     
                     solution.solutions.append(solution)
+                    print("len solutions ", len(solution.solutions))
                     solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + self.checkScore(solution) * 0.555 
                     best_nodes.append(solution)
 
@@ -127,6 +131,7 @@ class Search:
                 if len(node.solutions) == 2:
                     print("n_solutions", len(node.solutions))
                     print(node.solutions)
+                print("vai entrar no search")
                 self.search(node.solutions)
         
         if not solutions:
