@@ -33,7 +33,7 @@ class Search:
 
     # Breadth-first
     def search(self, solutions=[]):
-
+        print()
         iteration = 0 if not solutions else len(solutions)  # numero da peça que estamos a ver agora
 
         best_nodes = []
@@ -65,10 +65,11 @@ class Search:
 
                 # guardar as keys para chegar ao estado especifico dessa solução
                 solution.keys = [*keys]
+                print(solution.shape, solution.keys)
                 solution.solutions = [*solutions]
 
                 valid_solution = False
-                while self.valid(solution):
+                while self.valid(solution) and keys:
 
                     solution.shape.y += 1
 
@@ -115,9 +116,8 @@ class Search:
                         self.best_nodes.append(solution)    #adicionar nó terminal à lista de soluções possíveis
 
         if len(solution.solutions) != len(self.shapes) - 1:   
-
             best_nodes = sorted(best_nodes, key=lambda node: node.heuristic, reverse=True)[:self.max_nodes]
-
+            
             for node in best_nodes:
                 self.search(node.solutions)
         
