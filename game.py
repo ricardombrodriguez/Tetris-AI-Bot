@@ -11,7 +11,7 @@ logger = logging.getLogger("Game")
 logger.setLevel(logging.DEBUG)
 
 GAME_SPEED = 10
-SPEED_STEP = 10  # points
+SPEED_STEP = 10 # points
 
 
 class Game:
