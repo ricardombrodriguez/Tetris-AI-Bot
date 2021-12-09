@@ -75,12 +75,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         current_shape = findShape(piece)
                         next_shapes = [findShape(shape) for shape in next_pieces]
-                        #shapes = [current_shape] + [next_shapes[0]]
+                        #shapes = [current_shape] + next_shapes[:]
                         shapes = [current_shape] + [next_shapes[0]]
+                        #shapes = [current_shape]
                         s = Search(state,initial_info,shapes)
                         print("começou o search")
+                        start = time.time()
                         s.search()
-                        print("acabou o search....")
+                        print("--- %s seconds ---" % (time.time() - start))
+                        print(s.iter)
                         print()
 
                         #keys = s.solution.keys
