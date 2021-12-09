@@ -19,12 +19,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
         print(initial_info)
+        #print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
-        keys = []
-
-
+        keys = []   # isto pode ser um array de arrays, cada sub-array é o conjunto de chaves para uma das peças especificas no lookahead
+        first_piece = True  #quando está é true, temos de usar o search() e calcular as keys consoante o lookahead
+        all_keys = []
+        
         while True:
+
             try:
                 state = json.loads(
                     await websocket.recv()
@@ -32,33 +35,79 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if keys:
                     #print(keys[0])
+                    """
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})
                     )
+                    """
+                    print("KEY PRESSED:", keys[0])
+                    await websocket.send(
+                        json.dumps({"cmd": "key", "key": keys.pop(0)})   
+                    )
+
                 
                 # Peça recebida
-                if 'piece' in state.keys():
+                if 'piece' in state:
                     piece = state['piece']
                     next_pieces = state['next_pieces']    # apenas a prineira peça
-                    
                 else:
                     piece = None
                 
                 # A peça foi encaixada, não existindo nenhuma nova, por agora
                 if piece is None:
                     new_piece = True
-                else:
 
+                # Nova peça
+                elif new_piece:    
+                    print(all_keys)
+                    # Caso a peça faça parte do lookahead de uma peça anterior (só verifica se keys existe porque o pop das keys ja acontece acima)
+                    if not first_piece:
+
+                        # se todas as chaves/keys do lookahead já foram enviadas, então acabou e a próxima peça recebida vai fazer o search
+                        if not all_keys:
+                            print("A ratisse entrou")
+                            first_piece = True
+                            
+                        else:
+                            new_piece = False
+                            keys = all_keys.pop(0)
+                            print("new keys:", keys)
+                            
                     # Encontrar a melhor solução para a nova peça
-                    if new_piece is True:
+                    elif first_piece:
 
                         current_shape = findShape(piece)
-                        next_shapes = [findShape(next_piece) for next_piece in next_pieces]
-                        s = Search(state,current_shape,initial_info, next_shapes)
-                        #s = Search(state,current_shape,initial_info)
+                        next_shapes = [findShape(shape) for shape in next_pieces]
+                        shapes = [current_shape] + [next_shapes[0]]
+                        print("vai calcular....")
+                        s = Search(state,initial_info,shapes)
                         s.search()
-                        keys = s.solution.keys
+
+                        #keys = s.solution.keys
+                        # o search() tem de retornar uma lista de listas, em que cada sublista é as keys de uma peça especifica
+
+                        #current_keys = s.solution[0].keys
+                        #next_keys = s.solution[1].keys
+                        
+                        print("numero de iterações")
+                        print(s.iter)
+
+                        print("posições das peças")
+                        for shape in s.solution.solutions:
+                            print(shape.shape.positions)
+
+                        all_keys = [sol.keys for sol in s.solution.solutions]
+                        
+                        print()
+                        print("--- novas 4 peças ---")
+                        print(all_keys)
+                        
+                        keys = all_keys.pop(0)
+
                         new_piece = False
+                        first_piece = False
+
+
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
