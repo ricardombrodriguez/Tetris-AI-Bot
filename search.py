@@ -2,6 +2,8 @@ from collections import Counter
 from copy import copy
 from shape import *
 
+import math
+
 # uma das soluções
 class Solution:
 
@@ -29,7 +31,7 @@ class Search:
         self.shapes = shapes
         for shape in self.shapes:
             shape.set_pos((self.x - shape.dimensions.x) / 2, 0) 
-            print(shape)
+            # print(shape)
 
         self.best_solution = None
 
@@ -46,7 +48,7 @@ class Search:
         self.iter += 1
 
         for rot in range(0, len(self.shapes[iteration].plan)):
-
+            
             piece = copy(self.shapes[iteration])
             piece.rotate(rot)
             
@@ -90,7 +92,6 @@ class Search:
                     key = keys.pop(0)
                                                 
                     if key == "s":
-                        
                         while self.valid(solution):
                             solution.shape.y +=1
                             
@@ -130,6 +131,10 @@ class Search:
                         all_heuristics = [self.checkHeight(sol) * -0.510066 + self.checkBumpiness(sol) * -0.184483 + \
                                                   self.checkHoles(sol)* -0.35663 + self.checkScore(sol) * 0.555 \
                                                   for sol in solution.solutions]
+                        
+                        """ all_heuristics = [self.checkHeight(sol) * -0.510066 + self.checkBumpiness(sol) * -0.184483 + \
+                                                  self.checkHoles(sol)* -0.1783 + self.checkScore(sol) * 0.555 + self.distance(sol) * -0.1783 \
+                                                  for sol in solution.solutions] """
                         solution.heuristic = sum(all_heuristics)
 
                         #solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + score * 0.555
@@ -143,6 +148,12 @@ class Search:
 
     def biggestHeight(self,solution):
         return self.y - min(list(solution.game), key = lambda coord : coord[1])[1]
+    
+    def lowestHeight(self, solution):
+        return self.y - max(list(solution.game), key = lambda coord : coord[1])[1]
+    
+    def distance(self, solution):
+        return math.sqrt( self.biggestHeight(solution) - self.lowestHeight(solution) )
 
 
     def valid(self, solution):

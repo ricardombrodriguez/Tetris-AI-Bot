@@ -77,11 +77,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         next_shapes = [findShape(shape) for shape in next_pieces]
                         #shapes = [current_shape] + [next_shapes[0]]
                         shapes = [current_shape] + [next_shapes[0]]
+                        shapes = [current_shape]
                         s = Search(state,initial_info,shapes)
-                        print("começou o search")
+                        #print("começou o search")
                         s.search()
-                        print("acabou o search....")
-                        print()
+                        #print("acabou o search....")
+                        #print()
 
                         #keys = s.solution.keys
                         # o search() tem de retornar uma lista de listas, em que cada sublista é as keys de uma peça especifica
