@@ -5,7 +5,7 @@ import os
 import websockets
 from shape import S, Z, I, O, J, T, L, Shape
 from search import *
-import random
+import time
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
@@ -18,12 +18,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
-        print(initial_info)
+        shapes_keys = shapesKeys(SHAPES,initial_info)
+        print(shapes_keys)
 
-        A = -0.510066 + random.uniform(-0.2, 0.2)
-        B = -0.184483 + random.uniform(-0.2, 0.2)
-        C = -0.35663 + random.uniform(-0.2, 0.2)
-        D = 0.555 + random.uniform(-0.2, 0.2)
+
+        #random.uniform(-0.005, 0.005)
+        A = -0.5315399798301605 
+        B = -0.19154935732098807
+        C = -0.21347761435267243 
+        D = 0.35768437036647033
         variables = [A,B,C,D]
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
@@ -81,10 +84,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         next_shapes = [fs.findShape(shape) for shape in next_pieces]
                         # shapes = [current_shape] + next_shapes[:]
-                        #shapes = [current_shape] + next_shapes[:-2]
-                        shapes = [current_shape] + next_shapes[:-3]
-                        s = Search(state,initial_info,shapes,variables)
+                        shapes = [current_shape] + next_shapes[:-2]
+                        #shapes = [current_shape] + next_shapes[:-3]
+                        s = Search(state,initial_info,shapes,variables,shapes_keys)
+                        print("começou o search")
+                        start = time.time()
                         s.search()
+                        print("--- %s seconds (1 lookeahead) ---" % (time.time() - start))
+                        print(s.iter)
+                        print()
             
                         all_keys = [sol.keys for sol in s.best_solution.solutions]
 
@@ -105,6 +113,43 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     file_object.close()
 
                 return
+
+def shapesKeys(shapes, initial_info):
+
+    grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
+    x = max(grid, key = lambda coord : coord[0])[0] + 1
+    y = max(grid, key = lambda coord : coord[1])[1]
+
+    shapekeys = {}    #dict
+
+    for fshape in shapes:
+
+        fshape.set_pos((x - fshape.dimensions.x) / 2, 0) 
+            
+        for rot in range(0, len(fshape.plan)):
+            
+            _fs = copy(fshape)
+            _fs.rotate(rot)
+            
+            min_x = min(_fs.positions, key=lambda coords: coords[0])[0]
+            max_x = max(_fs.positions, key=lambda coords: coords[0])[0]
+            
+            # percorrer colunas [1,8]
+            for a in range(1, x-1):
+                    
+                x_differential = a - min_x
+                # dispensa soluções não válidas
+                if (x_differential + max_x >= x - 1):
+                    break
+
+                keys = ["w"]*rot
+
+                keys += ["a"]*abs(x_differential) + ["s"] if x_differential < 0 else ["d"]*abs(x_differential) + ["s"]                
+                
+                name = _fs.name + str(rot)
+                shapekeys.setdefault(name, []).append(keys)    
+                 
+    return shapekeys
 
 # Search the shape 
 # SHAPES = [Shape(s) for s in [S, Z, I, O, J, T, L]]
