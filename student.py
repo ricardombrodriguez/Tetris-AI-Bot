@@ -1,11 +1,11 @@
 import asyncio
-import time
 import getpass
 import json
 import os
 import websockets
 from shape import S, Z, I, O, J, T, L, Shape
 from search import *
+import random
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
@@ -19,6 +19,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
         print(initial_info)
+
+        A = -0.510066 + random.uniform(-0.2, 0.2)
+        B = -0.184483 + random.uniform(-0.2, 0.2)
+        C = -0.35663 + random.uniform(-0.2, 0.2)
+        D = 0.555 + random.uniform(-0.2, 0.2)
+        variables = [A,B,C,D]
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
         keys = []   # isto pode ser um array de arrays, cada sub-array é o conjunto de chaves para uma das peças especificas no lookahead
@@ -71,11 +77,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         # shapes = [current_shape] + next_shapes[:]
                         #shapes = [current_shape] + next_shapes[:-2]
                         shapes = [current_shape] + next_shapes[:-3]
-                        s = Search(state,initial_info,shapes)
+                        s = Search(state,initial_info,shapes,variables)
                         s.search()
-                        print("Número de iterações: ", s.iter)
-                        print("================================")
-                        print()
             
                         all_keys = [sol.keys for sol in s.best_solution.solutions]
 
@@ -87,6 +90,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
+                with open("pontuações.txt", "a") as file_object:
+                    file_object.write("A: " + str(A) + " | ")
+                    file_object.write("B: " + str(B) + " | ")
+                    file_object.write("C: " + str(C) + " | ")
+                    file_object.write("D: " + str(D) + " | ")
+                    file_object.write("\n")
+                    file_object.close()
+
                 return
 
 # Search the shape 

@@ -2,9 +2,6 @@ from collections import Counter
 from copy import copy
 from shape import *
 
-import math
-
-# uma das soluções
 class Solution:
 
     def __init__(self, shape):
@@ -14,11 +11,13 @@ class Solution:
 
 class Search:
 
-    def __init__(self, state, initial_info, shapes): 
+    def __init__(self, state, initial_info, shapes, variables): 
 
         self.game = {(tup[0],tup[1]) for tup in state['game']}
         self.grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
         self.game_speed = state['game_speed']
+
+        self.A, self.B, self.C, self.D = variables[0], variables[1], variables[2], variables[3]
 
         self.x = max(self.grid, key = lambda coord : coord[0])[0] + 1
         self.y = max(self.grid, key = lambda coord : coord[1])[1]
@@ -106,7 +105,7 @@ class Search:
                         solution.score = self.checkScore(solution)
                         solution.solutions.append(solution)
 
-                        if not solutions and self.biggestHeight(solution) > 15:
+                        if not solutions and self.biggestHeight(solution) >= 30:
                             print("primeira peça da combinação acima do limite")
                             solution.above_threshold = True
 
@@ -117,7 +116,7 @@ class Search:
                             print("kaboom")
                             solution.heuristic = (self.checkHeight(solution) * -1000.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.55663) + (self.checkScore(solution) * 2)
                         else:
-                            solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
+                            solution.heuristic = (self.checkHeight(solution) * self.A) + (self.checkBumpiness(solution) * self.B) + (self.checkHoles(solution)* self.C) + (self.checkScore(solution) * self.D)
 
                         #solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + self.checkScore(solution) * 0.555 
                         best_nodes.append(solution)
