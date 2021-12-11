@@ -2,12 +2,15 @@ from collections import Counter
 from copy import copy
 from shape import *
 
+import math
+
 # uma das soluções
 class Solution:
 
     def __init__(self, shape):
 
         self.shape = shape
+        self.above_threshold = False # variavel que diz se a solução está acima do thresold/limite que temos, isto para fazer heuristicas se esta solução pertencer a uma combinação cuja primeira peça esteja acima do limite
 
 class Search:
 
@@ -15,6 +18,7 @@ class Search:
 
         self.game = {(tup[0],tup[1]) for tup in state['game']}
         self.grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
+        self.game_speed = state['game_speed']
 
         self.x = max(self.grid, key = lambda coord : coord[0])[0] + 1
         self.y = max(self.grid, key = lambda coord : coord[1])[1]
@@ -22,125 +26,142 @@ class Search:
         self.shapes = shapes
         for shape in self.shapes:
             shape.set_pos((self.x - shape.dimensions.x) / 2, 0) 
-            print(shape)
+            # print(shape)
 
         self.best_solution = None
         self.iter = 0
 
         self.best_nodes = []    # soluções finais
-        self.max_nodes = 5
 
     # Breadth-first
     def search(self, solutions=[]):
 
         iteration = 0 if not solutions else len(solutions)  # numero da peça que estamos a ver agora
 
-        print(iteration)
-        if iteration == 0:
-            print(self.shapes)
-
         best_nodes = []
 
-        print(self.shapes[iteration])
+        if iteration < len(self.shapes):
 
-        for rot in range(0, len(self.shapes[iteration].plan)):
+            for rot in range(0, len(self.shapes[iteration].plan)):
+                
+                piece = copy(self.shapes[iteration])
+                piece.rotate(rot)
+                
+                # para calcular o numero de keys para chegar a uma determinada coluna
+                min_x = min(piece.positions, key=lambda coords: coords[0])[0]
+                max_x = max(piece.positions, key=lambda coords: coords[0])[0]
 
-            piece = copy(self.shapes[iteration])
-            piece.rotate(rot)
-            
-            # para calcular o numero de keys para chegar a uma determinada coluna
-            min_x = min(piece.positions, key=lambda coords: coords[0])[0]
-            max_x = max(piece.positions, key=lambda coords: coords[0])[0]
-
-            # percorrer colunas [1,8]
-            for x in range(1, self.x-1):
-
-                x_differential = x - min_x
-
-                # dispensa soluções não válidas
-                if (x_differential + max_x >= self.x - 1):
-                    break
-
-                keys = ["w"]*rot
-
-                keys += ["a"]*abs(x_differential) + ["s"] if x_differential < 0 else ["d"]*abs(x_differential) + ["s"]
-
-                # obter a shape com o estado inicial
-                solution = Solution(copy(self.shapes[iteration]))
-
-                # guardar as keys para chegar ao estado especifico dessa solução
-                solution.keys = [*keys]
-                solution.solutions = [*solutions]
-
-                self.iter += 1
-
-                valid_solution = False
-                while self.valid(solution):
-
-                    solution.shape.y += 1
-
-                    key = keys.pop(0)
-                                                
-                    if key == "s":
-                        
-                        while self.valid(solution):
-                            solution.shape.y +=1
-                            
-                        solution.shape.y -= 1
-
-                    elif key == "w":
-                        solution.shape.rotate()
-
-                    elif key == "a":
-                        shift = -1
-
-                    elif key == "d":
-                        shift = +1
-
-                    if key in ["a", "d"]:
-                        solution.shape.translate(shift, 0)
+                # percorrer colunas [1,8]
+                for x in range(1, self.x-1):
                     
-                    if not keys:
-                        valid_solution = True
+                    x_differential = x - min_x
+
+                    # dispensa soluções não válidas
+                    if (x_differential + max_x >= self.x - 1):
                         break
-                    
-                if valid_solution:
 
-                    last_solution_game = solutions[-1].game if solutions else self.game
-                    solution.game = set(last_solution_game).union(set(solution.shape.positions))
-                    
-                    solution.solutions.append(solution)
-                    print("len solutions ", len(solution.solutions))
-                    solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + self.checkScore(solution) * 0.555 
-                    best_nodes.append(solution)
+                    keys = ["w"]*rot
 
-                    if len(solution.solutions) == len(self.shapes):
+                    keys += ["a"]*abs(x_differential) + ["s"] if x_differential < 0 else ["d"]*abs(x_differential) + ["s"]
 
-                        all_heuristics = [ sol.heuristic for sol in solution.solutions]
-                        solution.heuristic = sum(all_heuristics)
-                        self.best_nodes.append(solution)    #adicionar nó terminal à lista de soluções possíveis
+                    # obter a shape com o estado inicial
+                    solution = Solution(copy(self.shapes[iteration]))
 
-        print("sol.solutions: ", len(solution.solutions))
-        if len(solution.solutions) != len(self.shapes):  
+                    # guardar as keys para chegar ao estado especifico dessa solução
+                    solution.keys = [*keys]
+                    solution.solutions = [*solutions]
 
-            print("best nodes") 
+                    valid_solution = False
+                    while self.valid(solution):
 
-            best_nodes = sorted(best_nodes, key=lambda node: node.heuristic, reverse=True)[:self.max_nodes]
+                        solution.shape.y += 1
 
-            for node in best_nodes:
-                if len(node.solutions) == 2:
-                    print("n_solutions", len(node.solutions))
-                    print(node.solutions)
-                print("vai entrar no search")
-                self.search(node.solutions)
-        
-        if not solutions:
-            self.best_solution = max(self.best_nodes, key = lambda sol : sol.heuristic)
+                        key = keys.pop(0)
+                                                    
+                        if key == "s":
+                            while self.valid(solution):
+                                solution.shape.y +=1
+                                
+                            solution.shape.y -= 1
+
+                        elif key == "w":
+                            solution.shape.rotate()
+
+                        elif key == "a":
+                            solution.shape.translate(-1, 0)
+
+                        elif key == "d":
+                            solution.shape.translate(+1, 0)
+                        
+                        if not keys:
+                            valid_solution = True
+                            break
+                        
+                    if valid_solution:
+
+                        self.iter += 1
+
+                        last_solution_game = solutions[-1].game if solutions else self.game
+                        solution.game = set(last_solution_game).union(set(solution.shape.positions))
+                        solution.score = self.checkScore(solution)
+                        solution.solutions.append(solution)
+
+                        if not solutions and self.biggestHeight(solution) > 15:
+                            print("primeira peça da combinação acima do limite")
+                            solution.above_threshold = True
+
+                        if solutions:
+                            solution.above_threshold = solution.solutions[0].above_threshold
+
+                        if solution.above_threshold:
+                            print("kaboom")
+                            solution.heuristic = (self.checkHeight(solution) * -1000.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.55663) + (self.checkScore(solution) * 2)
+                        else:
+                            solution.heuristic = (self.checkHeight(solution) * -0.510066) + (self.checkBumpiness(solution) * -0.184483) + (self.checkHoles(solution)* -0.35663) + (self.checkScore(solution) * 0.555)
+
+                        #solution.heuristic = self.checkHeight(solution) * -0.510066 + self.checkBumpiness(solution) * -0.184483 + self.checkHoles(solution)* -0.35663 + self.checkScore(solution) * 0.555 
+                        best_nodes.append(solution)
+
+                        if len(solution.solutions) == len(self.shapes):
+
+                            solution.heuristic = sum([sol.heuristic for sol in solution.solutions])                            
+                            self.best_nodes.append(solution)    # adicionar nó terminal à lista de soluções possíveis
+
+            if len(solution.solutions) != len(self.shapes):  
+
+                if self.game_speed <= 15:
+                    max_nodes = 10
+                elif self.game_speed > 15 and self.game_speed <= 20:
+                    max_nodes = 4
+                elif self.game_speed > 20 and self.game_speed <= 25:
+                    max_nodes = 2
+                elif self.game_speed > 25:
+                    max_nodes = 1
+
+                #lookahead 2
+                # if self.game_speed <= 15:
+                #     max_nodes = 8
+                # elif self.game_speed > 15 and self.game_speed <= 20:
+                #     max_nodes = 3
+                # elif self.game_speed > 20 and self.game_speed <= 25:
+                #     max_nodes = 2
+                # elif self.game_speed > 25:
+                #     max_nodes = 1
+
+
+                best_nodes = sorted(best_nodes, key=lambda node: node.heuristic, reverse=True)[:max_nodes]
+
+                for node in best_nodes:
+                    self.search(node.solutions)
+            
+            if not solutions and len(self.best_nodes) != 0:
+                self.best_solution = max(self.best_nodes, key = lambda sol : sol.heuristic)
+
 
 
     def biggestHeight(self,solution):
-        return self.y - min(list(solution.game), key = lambda coord : coord[1])[1]
-
+        return self.y - min(list(solution.game), key = lambda coord : coord[1], default = (0,self.y))[1]
+    
 
     def valid(self, solution):
         game = solution.solutions[-1].game if solution.solutions else self.game

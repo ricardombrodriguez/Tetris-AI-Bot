@@ -19,7 +19,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
         print(initial_info)
-        #print("INICIO")
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
         keys = []   # isto pode ser um array de arrays, cada sub-array é o conjunto de chaves para uma das peças especificas no lookahead
@@ -34,13 +33,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
 
                 if keys:
-                    #print(keys[0])
-                    """
-                    await websocket.send(
-                        json.dumps({"cmd": "key", "key": keys.pop(0)})
-                    )
-                    """
-                    #print("KEYS:", keys)
+
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})   
                     )
@@ -75,31 +68,22 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         current_shape = findShape(piece)
                         next_shapes = [findShape(shape) for shape in next_pieces]
-                        #shapes = [current_shape] + next_shapes[:]
-                        shapes = [current_shape] + [next_shapes[0]]
-                        #shapes = [current_shape]
+                        # shapes = [current_shape] + next_shapes[:]
+                        #shapes = [current_shape] + next_shapes[:-2]
+                        shapes = [current_shape] + next_shapes[:-3]
                         s = Search(state,initial_info,shapes)
-                        print("começou o search")
-                        start = time.time()
                         s.search()
-                        print("--- %s seconds ---" % (time.time() - start))
-                        print(s.iter)
+                        print("Número de iterações: ", s.iter)
+                        print("================================")
                         print()
-
-                        #keys = s.solution.keys
-                        # o search() tem de retornar uma lista de listas, em que cada sublista é as keys de uma peça especifica
-
-                        #current_keys = s.solution[0].keys
-                        #next_keys = s.solution[1].keys
             
                         all_keys = [sol.keys for sol in s.best_solution.solutions]
-                        
+
+                      
                         keys = all_keys.pop(0)
 
                         new_piece = False
                         first_piece = False
-
-
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
