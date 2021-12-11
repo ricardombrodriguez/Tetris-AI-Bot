@@ -11,11 +11,12 @@ class Solution:
 
 class Search:
 
-    def __init__(self, state, initial_info, shapes, variables): 
+    def __init__(self, state, initial_info, shapes, variables, shapes_keys): 
 
         self.game = {(tup[0],tup[1]) for tup in state['game']}
         self.grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
         self.game_speed = state['game_speed']
+        self.shapes_keys = shapes_keys
 
         self.A, self.B, self.C, self.D = variables[0], variables[1], variables[2], variables[3]
 
@@ -45,23 +46,11 @@ class Search:
                 
                 piece = copy(self.shapes[iteration])
                 piece.rotate(rot)
-                
-                # para calcular o numero de keys para chegar a uma determinada coluna
-                min_x = min(piece.positions, key=lambda coords: coords[0])[0]
-                max_x = max(piece.positions, key=lambda coords: coords[0])[0]
 
-                # percorrer colunas [1,8]
-                for x in range(1, self.x-1):
-                    
-                    x_differential = x - min_x
+                name = piece.name + str(rot)
+                for keys in self.shapes_keys[name]:
 
-                    # dispensa soluções não válidas
-                    if (x_differential + max_x >= self.x - 1):
-                        break
-
-                    keys = ["w"]*rot
-
-                    keys += ["a"]*abs(x_differential) + ["s"] if x_differential < 0 else ["d"]*abs(x_differential) + ["s"]
+                    keys = [*keys]
 
                     # obter a shape com o estado inicial
                     solution = Solution(copy(self.shapes[iteration]))
@@ -128,13 +117,20 @@ class Search:
 
             if len(solution.solutions) != len(self.shapes):  
 
-                if self.game_speed <= 15:
-                    max_nodes = 10
-                elif self.game_speed > 15 and self.game_speed <= 20:
-                    max_nodes = 4
-                elif self.game_speed > 20 and self.game_speed <= 25:
+                #lookahead 1
+                if self.game_speed <= 10:
+                    max_nodes = 11  # todos
+                elif self.game_speed > 10 and self.game_speed <= 15:
+                    max_nodes = 8
+                elif self.game_speed > 15 and self.game_speed <= 25:
+                    max_nodes = 6
+                elif self.game_speed > 25 and self.game_speed <= 30:
+                    max_nodes = 5
+                elif self.game_speed > 30 and self.game_speed <= 40:
+                    max_nodes = 3
+                elif self.game_speed > 40 and self.game_speed <= 52:
                     max_nodes = 2
-                elif self.game_speed > 25:
+                elif self.game_speed > 52:
                     max_nodes = 1
 
                 #lookahead 2
