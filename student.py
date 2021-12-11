@@ -25,7 +25,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         keys = []   # isto pode ser um array de arrays, cada sub-array é o conjunto de chaves para uma das peças especificas no lookahead
         first_piece = True  #quando está é true, temos de usar o search() e calcular as keys consoante o lookahead
         all_keys = []
+        fs = Fs()
         
+        # grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
+        # x = max(grid, key = lambda coord : coord[0])[0] + 1
+        # y = max(grid, key = lambda coord : coord[1])[1]
+        # print(x,y)
+
         while True:
 
             try:
@@ -35,12 +41,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if keys:
                     #print(keys[0])
-                    """
-                    await websocket.send(
-                        json.dumps({"cmd": "key", "key": keys.pop(0)})
-                    )
-                    """
-                    #print("KEYS:", keys)
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": keys.pop(0)})   
                     )
@@ -72,9 +72,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             
                     # Encontrar a melhor solução para a nova peça
                     elif first_piece:
+                        
+                        current_shape = fs.findShape(piece)
 
-                        current_shape = findShape(piece)
-                        next_shapes = [findShape(shape) for shape in next_pieces]
+                        next_shapes = [fs.findShape(shape) for shape in next_pieces]
                         # shapes = [current_shape] + next_shapes[:]
                         shapes = [current_shape] + [next_shapes[0]]
                         #shapes = [current_shape]
@@ -110,65 +111,102 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
 # Search the shape 
 # SHAPES = [Shape(s) for s in [S, Z, I, O, J, T, L]]
-def findShape(piece):
+class Fs:
+    
+    # def __init__(self):
+        
+    #     self.shapekeys = dict()
+        
+    #     self.x = 10 
+    #     self.y = 30
+    
+    def findShape(self, piece):
+        
+        #S (done)
+        if piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
+            fshape = Shape(S)
 
-    #S (done)
-    if piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
-        return Shape(S)
+        elif piece[0][1] == piece[1][1] and piece[0][0] == piece[3][0] and piece[2][1] == piece[3][1]:
+            fshape = Shape(S)
+            fshape.rotate(1)
 
-    elif piece[0][1] == piece[1][1] and piece[0][0] == piece[3][0] and piece[2][1] == piece[3][1]:
-        s = Shape(S)
-        s.rotate(1)
-        return s
+        #Z (dá erro)
+        elif piece[0][0] == piece[2][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
+            fshape = Shape(Z)
 
-    #Z (dá erro)
-    elif piece[0][0] == piece[2][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
-        return Shape(Z)
+        elif piece[0][1] == piece[1][1] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
+            fshape = Shape(Z)
+            fshape.rotate(1)
 
-    elif piece[0][1] == piece[1][1] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
-        z = Shape(Z)
-        z.rotate(1)
-        return z
+        #I (done)
+        elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][1] == piece[3][1]:
+            fshape = Shape(I)
+    
+        elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][0] == piece[3][0]:
+            fshape = Shape(I)
+            fshape.rotate(1)
 
-    #I (done)
-    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][1] == piece[3][1]:
-        return Shape(I)
-   
-    elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][0] == piece[3][0]:
-        i = Shape(I)
-        i.rotate(1)
-        return i
+        #O (done)
+        elif piece[0][0] == piece[2][0] and piece[0][1] == piece[1][1] and piece[1][0] == piece[3][0] and piece[2][1] == piece[3][1]:
+            fshape = Shape(O)
 
-    #O (done)
-    elif piece[0][0] == piece[2][0] and piece[0][1] == piece[1][1] and piece[1][0] == piece[3][0] and piece[2][1] == piece[3][1]:
-        return Shape(O)
+        #J (done acho)
+        elif piece[0][1] == piece[1][1] and piece[0][0] == piece[2][0] and piece[2][0] == piece[3][0]:
+            fshape = Shape(J)
 
-    #J (done acho)
-    elif piece[0][1] == piece[1][1] and piece[0][0] == piece[2][0] and piece[2][0] == piece[3][0]:
-        return Shape(J)
+        elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
+            fshape = Shape(J)
+            fshape.rotate(1)
 
-    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
-        j = Shape(J)
-        j.rotate(1)
-        return j
+        #T (done acho)
+        elif piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
+            fshape = Shape(T)
 
-    #T (done acho)
-    elif piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
-        return Shape(T)
+        elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
+            fshape = Shape(T)
+            fshape.rotate(1)
 
-    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
-        t = Shape(T)
-        t.rotate(1)
-        return t
+        #L
+        elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
+            fshape = Shape(L)
 
-    #L
-    elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
-        return Shape(L)
+        elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[0][0] == piece[3][0]:
+            fshape = Shape(L)
+            fshape.rotate(1)
+        
+        # fshape.set_pos((self.x - fshape.dimensions.x) / 2, 0) 
+        
+        # print(fshape)
+        
+        # for rot in range(0, len(fshape.plan)):
+            
+        #     min_x = min(fshape.positions, key=lambda coords: coords[0])[0]
+        #     max_x = max(fshape.positions, key=lambda coords: coords[0])[0]
+            
+        #     # percorrer colunas [1,8]
+        #     for a in range(1, self.x-1):
+                    
+        #         x_differential = a - min_x
+        #         # dispensa soluções não válidas
+        #         if (x_differential + max_x >= self.x - 1):
+        #             break
 
-    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[0][0] == piece[3][0]:
-        l = Shape(L)
-        l.rotate(1)
-        return l
+        #         keys = ["w"]*rot
+
+        #         keys += ["a"]*abs(x_differential) + ["s"] if x_differential < 0 else ["d"]*abs(x_differential) + ["s"]                
+                
+        #         #for item in self.shapekeys:      # se shape n está adiciona keys
+
+        #         if fshape not in self.shapekeys:
+        #             print("shapes", self.shapekeys.keys())
+        #             print("new shape new keys")
+        #             self.shapekeys[fshape] = [keys]
+        #         else:                                    # se shape está ent atualiza keys   
+        #             self.shapekeys[fshape].append(keys)
+        
+        return fshape
+        
+    
 
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
