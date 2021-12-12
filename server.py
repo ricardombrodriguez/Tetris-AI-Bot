@@ -57,12 +57,6 @@ class GameServer:
             score,
         )
 
-        # guardar score
-        with open("pontuações.txt", "a") as file_object:
-
-            file_object.write("FINAL SCORE:  " + str(score) + " | ")
-            file_object.close()
-
         self._highscores.append((self.current_player.name, score))
         self._highscores = sorted(self._highscores, key=lambda s: s[1], reverse=True)[
             :MAX_HIGHSCORES

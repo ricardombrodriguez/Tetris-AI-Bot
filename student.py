@@ -20,17 +20,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
         shapes_keys = shapesKeys(SHAPES,initial_info)
 
-        #random.uniform(-0.005, 0.005)
-        
-        A = -0.5315399798301605
-        B = -0.19154935732098807
-        C = -0.21347761435267243
-        D = 0.35768437036647033
-
-        A = -0.510066 + random.uniform(-0.3, 0.3)
-        B = -0.184483 + random.uniform(-0.3, 0.3)
-        C = -0.35663 + random.uniform(-0.3, 0.3)
-        D = 0.760666 + random.uniform(-0.3, 0.3)
+        A = -0.510066
+        B = -0.184483
+        C = -0.35663
+        D = 0.760666
 
         variables = [A,B,C,D]
 
@@ -52,7 +45,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         json.dumps({"cmd": "key", "key": keys.pop(0)})   
                     )
 
-                
                 # Peça recebida
                 if 'piece' in state:
                     piece = state['piece']
@@ -88,31 +80,25 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         if game_speed <= 30:
                             # lookahead 3
                             shapes = [current_shape] + next_shapes[:]
+
                         elif game_speed > 30 and game_speed < 38:
                             #lookahead 2
                             shapes = [current_shape] + next_shapes[:-1]
+
                         elif game_speed >= 38 and game_speed < 55:
                             #lookahead 1
                             shapes = [current_shape] + next_shapes[:-2]
+
                         elif game_speed >= 55:
                             #sem lookahead
                             shapes = [current_shape]
 
-                        # shapes = [current_shape] + next_shapes[:]
-                        # shapes = [current_shape]
-                        #shapes = [current_shape]
+                        #shapes = [current_shape] + next_shapes[:-2]
 
                         s = Search(state,initial_info,shapes,variables,shapes_keys)
-                        print("começou o search")
-                        start = time.time()
                         s.search()
-                        print("--- %s seconds (1 lookeahead) ---" % (time.time() - start))
-                        print(s.iter)
-                        print()
-            
-                        all_keys = [sol.keys for sol in s.best_solution.solutions]
 
-                      
+                        all_keys = [sol.keys for sol in s.best_solution.solutions] if s.best_solution.solutions else [["s"]]*len(shapes)
                         keys = all_keys.pop(0)
 
                         new_piece = False
@@ -120,34 +106,28 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
-                with open("pontuações.txt", "a") as file_object:
-                    file_object.write("A: " + str(A) + " | ")
-                    file_object.write("B: " + str(B) + " | ")
-                    file_object.write("C: " + str(C) + " | ")
-                    file_object.write("D: " + str(D) + " \n ")
-                    file_object.close()
-
                 return
 
 def shapesKeys(shapes, initial_info):
 
     grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
     x = max(grid, key = lambda coord : coord[0])[0] + 1
-    y = max(grid, key = lambda coord : coord[1])[1]
 
     shapekeys = {}    #dict
 
     for fshape in shapes:
 
-        fshape.set_pos((x - fshape.dimensions.x) / 2, 0) 
+        fshape.set_pos((x - fshape.dimensions.x) / 2, 0)
             
         for rot in range(0, len(fshape.plan)):
             
             _fs = copy(fshape)
             _fs.rotate(rot)
-            
+
             min_x = min(_fs.positions, key=lambda coords: coords[0])[0]
             max_x = max(_fs.positions, key=lambda coords: coords[0])[0]
+
+            name = _fs.name + str(rot)
             
             # percorrer colunas [1,8]
             for a in range(1, x-1):
@@ -158,10 +138,7 @@ def shapesKeys(shapes, initial_info):
                     break
 
                 keys = ["w"]*rot
-
                 keys += ["a"]*abs(x_differential) + ["s"] if x_differential < 0 else ["d"]*abs(x_differential) + ["s"]                
-                
-                name = _fs.name + str(rot)
                 shapekeys.setdefault(name, []).append(keys)    
                  
     return shapekeys
