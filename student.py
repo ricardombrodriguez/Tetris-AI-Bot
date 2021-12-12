@@ -102,13 +102,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
-                with open("pontuações.txt", "a") as file_object:
-                    file_object.write("A: " + str(A) + " | ")
-                    file_object.write("B: " + str(B) + " | ")
-                    file_object.write("C: " + str(C) + " | ")
-                    file_object.write("D: " + str(D) + " | ")
-                    file_object.write("\n")
-                    file_object.close()
+                # with open("pontuações.txt", "a") as file_object:
+                #     file_object.write("A: " + str(A) + " | ")
+                #     file_object.write("B: " + str(B) + " | ")
+                #     file_object.write("C: " + str(C) + " | ")
+                #     file_object.write("D: " + str(D) + " | ")
+                #     file_object.write("\n")
+                #     file_object.close()
 
                 return
 
