@@ -27,10 +27,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         C = -0.21347761435267243
         D = 0.35768437036647033
 
-        """ A = -0.510066 + random.uniform(-0.2, 0.2)
-        B = -0.184483 + random.uniform(-0.2, 0.2)
-        C = -0.35663 + random.uniform(-0.2, 0.2)
-        D = 0.760666 + random.uniform(-0.2, 0.2) """
+        A = -0.510066 + random.uniform(-0.3, 0.3)
+        B = -0.184483 + random.uniform(-0.3, 0.3)
+        C = -0.35663 + random.uniform(-0.3, 0.3)
+        D = 0.760666 + random.uniform(-0.3, 0.3)
+
         variables = [A,B,C,D]
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
@@ -119,6 +120,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
+                with open("pontuações.txt", "a") as file_object:
+                    file_object.write("A: " + str(A) + " | ")
+                    file_object.write("B: " + str(B) + " | ")
+                    file_object.write("C: " + str(C) + " | ")
+                    file_object.write("D: " + str(D) + " \n ")
+                    file_object.close()
+
                 return
 
 def shapesKeys(shapes, initial_info):
