@@ -20,17 +20,23 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
         shapes_keys = shapesKeys(SHAPES, initial_info)
         print(initial_info)
+        # print(shapes_keys)
                 
         #random.uniform(-0.005, 0.005)
         A = -0.5315399798301605 
         B = -0.19154935732098807
         C = -0.21347761435267243 
-        D = 0.35768437036647033
+        D = 0.35768437036647033 
+        
+        # A = -0.807497500986516
+        # B = -0.25504492414524027
+        # C = -0.35930093447941513 
+        # D = 0.9714159653000018 
 
-        A = -0.510066 + random.uniform(-0.3, 0.3)
-        B = -0.184483 + random.uniform(-0.3, 0.3)
-        C = -0.35663 + random.uniform(-0.3, 0.3)
-        D = 0.760666 + random.uniform(-0.3, 0.3)
+        # A = -0.510066 + random.uniform(-0.3, 0.3)
+        # B = -0.184483 + random.uniform(-0.3, 0.3)
+        # C = -0.35663 + random.uniform(-0.3, 0.3)
+        # D = 0.760666 + random.uniform(-0.3, 0.3)
 
         variables = [A,B,C,D]
 

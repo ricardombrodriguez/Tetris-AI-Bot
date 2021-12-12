@@ -136,7 +136,7 @@ class Search:
 
 
     def biggestHeight(self,solution):
-        return self.y - min(list(solution.game), key = lambda coord : coord[1], default = (0,self.y))[1]
+        return self.y - min(list(solution.game), key = lambda coord : coord[1], default = (0,self.y-1))[1]
     
 
     def valid(self, solution):
@@ -152,8 +152,7 @@ class Search:
 
         for x in range(1, self.x-1):
             column_coords = {coord for coord in solution.game if coord[0] == x}
-            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
-            
+            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]
         return aggregate_height
 
 
@@ -170,11 +169,16 @@ class Search:
                 elif coord[0] == x+1:
                     next_column_coords.add(coord)
             
-            this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
-            next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
+            this_height = min(this_column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
+            next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
 
             absolute_difference = abs(next_height - this_height)
-            bumpiness += absolute_difference 
+            
+            if absolute_difference > 6:
+                bumpiness += absolute_difference * 10 
+            else:
+                bumpiness += absolute_difference 
+            
 
         return bumpiness
 
@@ -182,7 +186,7 @@ class Search:
     def checkHoles(self, solution):
         hole_weight = 0
         height = self.y
-
+        
         for x in range(1, self.x-1):
             column_coords = set()
             for coord in solution.game: 
@@ -191,9 +195,10 @@ class Search:
             
             height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
 
+            
             for y in range(height+1,self.y):
                 if ((x,y) not in column_coords):
-                        hole_weight += 1
+                        hole_weight += 2
 
         return hole_weight
 
