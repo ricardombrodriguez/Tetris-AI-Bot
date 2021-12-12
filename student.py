@@ -19,14 +19,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         )  # receive game update, this must be called timely or your game will get out of sync with the server
 
         shapes_keys = shapesKeys(SHAPES,initial_info)
-        print(shapes_keys)
-
 
         #random.uniform(-0.005, 0.005)
-        A = -0.5315399798301605 
+        
+        A = -0.5315399798301605
         B = -0.19154935732098807
-        C = -0.21347761435267243 
+        C = -0.21347761435267243
         D = 0.35768437036647033
+
+        """ A = -0.510066 + random.uniform(-0.2, 0.2)
+        B = -0.184483 + random.uniform(-0.2, 0.2)
+        C = -0.35663 + random.uniform(-0.2, 0.2)
+        D = 0.760666 + random.uniform(-0.2, 0.2) """
         variables = [A,B,C,D]
 
         new_piece = True  #variavel para saber é uma nova peça e, assim, calcular a search tree
@@ -52,6 +56,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if 'piece' in state:
                     piece = state['piece']
                     next_pieces = state['next_pieces']    # apenas a prineira peça
+                    game_speed = state['game_speed']
                 else:
                     piece = None
                 
@@ -77,9 +82,25 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         current_shape = findShape(piece)
                         next_shapes = [findShape(shape) for shape in next_pieces]
+
+                        shapes = None
+                        if game_speed <= 30:
+                            # lookahead 3
+                            shapes = [current_shape] + next_shapes[:]
+                        elif game_speed > 30 and game_speed < 38:
+                            #lookahead 2
+                            shapes = [current_shape] + next_shapes[:-1]
+                        elif game_speed >= 38 and game_speed < 55:
+                            #lookahead 1
+                            shapes = [current_shape] + next_shapes[:-2]
+                        elif game_speed >= 55:
+                            #sem lookahead
+                            shapes = [current_shape]
+
                         # shapes = [current_shape] + next_shapes[:]
-                        shapes = [current_shape] + next_shapes[:-2]
-                        #shapes = [current_shape] + next_shapes[:-3]
+                        # shapes = [current_shape]
+                        #shapes = [current_shape]
+
                         s = Search(state,initial_info,shapes,variables,shapes_keys)
                         print("começou o search")
                         start = time.time()
@@ -98,14 +119,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
-                with open("pontuações.txt", "a") as file_object:
-                    file_object.write("A: " + str(A) + " | ")
-                    file_object.write("B: " + str(B) + " | ")
-                    file_object.write("C: " + str(C) + " | ")
-                    file_object.write("D: " + str(D) + " | ")
-                    file_object.write("\n")
-                    file_object.close()
-
                 return
 
 def shapesKeys(shapes, initial_info):
