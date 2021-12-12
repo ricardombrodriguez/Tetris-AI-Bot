@@ -60,7 +60,7 @@ class GameServer:
         # guardar score
         with open("pontuações.txt", "a") as file_object:
 
-            file_object.write("FINAL SCORE:  " + str(score) + " ||| ")
+            file_object.write("FINAL SCORE:  " + str(score) + "\n")
             file_object.close()
 
         self._highscores.append((self.current_player.name, score))
