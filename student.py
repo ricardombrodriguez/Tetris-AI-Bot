@@ -77,21 +77,17 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         next_shapes = [findShape(shape) for shape in next_pieces]
 
                         shapes = None
-                        if game_speed <= 30:
+                        if game_speed <= 25:
                             # lookahead 3
                             shapes = [current_shape] + next_shapes[:]
 
-                        elif game_speed > 30 and game_speed < 38:
+                        elif game_speed > 25 and game_speed < 36:
                             #lookahead 2
                             shapes = [current_shape] + next_shapes[:-1]
 
-                        elif game_speed >= 38 and game_speed < 55:
+                        elif game_speed >= 36:
                             #lookahead 1
                             shapes = [current_shape] + next_shapes[:-2]
-
-                        elif game_speed >= 55:
-                            #sem lookahead
-                            shapes = [current_shape]
 
                         #shapes = [current_shape] + next_shapes[:-2]
 

@@ -47,7 +47,7 @@ class Search:
 
                 for keys in self.shapes_keys[name]:
 
-                    keys = [*keys]
+                    keys = [*keys]  
 
                     solution = Solution(copy(self.shapes[iteration]))
                     solution.keys = [*keys]
@@ -93,21 +93,7 @@ class Search:
                 #lookahead 3
                 if self.game_speed <= 15:
                     max_nodes = 2  # todos
-                elif self.game_speed > 15 and self.game_speed <= 30:
-                    max_nodes = 1
-
-                # lookahead 2
-                elif self.game_speed > 30 and self.game_speed <= 33:
-                    max_nodes = 2
-                elif self.game_speed > 33 and self.game_speed <= 38:
-                    max_nodes = 1
-
-                # lookahead 1
-                elif self.game_speed > 38 and self.game_speed <= 46:
-                    max_nodes = 2
-
-                # lookahead 1 e sem lookahead
-                elif self.game_speed > 46:
+                elif self.game_speed > 15:
                     max_nodes = 1
             
                 
@@ -118,7 +104,7 @@ class Search:
                 self.best_solution = max(self.best_nodes, key = lambda sol : sol.heuristic)
 
 
-    def valid(self, solution):
+    def valid(self, solution): 
         
         game = solution.solutions[-1].game if solution.solutions else self.game
         return not any(
@@ -128,17 +114,16 @@ class Search:
         )
 
 
-    def checkHeight(self, solution):
+    def checkHeight(self, solution): # soma da altura de todas as colunas do jogo
         aggregate_height = 0
 
         for x in range(1, self.x-1):
             column_coords = {coord for coord in solution.game if coord[0] == x}
-            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
-            
+            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]
         return aggregate_height
 
 
-    def checkBumpiness(self,solution):
+    def checkBumpiness(self,solution):  # verifica a diferença de altura de uma coluna com a sua seguinte, nao queremos que seja muito diferente senao significa que está a fazer "torres"
         bumpiness = 0
         
         for x in range(1, self.x-2):
@@ -150,16 +135,21 @@ class Search:
             next_height = min(next_column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]  # descobre o topo da coluna
 
             absolute_difference = abs(next_height - this_height)
-            bumpiness += absolute_difference 
+            
+            if absolute_difference > 6:
+                bumpiness += absolute_difference * 10 
+            else:
+                bumpiness += absolute_difference 
+            
 
         return bumpiness
 
 
-    def checkHoles(self, solution):
+    def checkHoles(self, solution): # verifica os buracos deixados no jogo pela colocaçao das peças, queremos o mínimo de buracos possivel
 
         hole_weight = 0
         height = self.y
-
+        
         for x in range(1, self.x-1):
             column_coords = set()
             for coord in solution.game: 
@@ -168,6 +158,7 @@ class Search:
             
             height = min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]  # descobre o topo da coluna
 
+            
             for y in range(height+1,self.y):
                 if ((x,y) not in column_coords):
                         hole_weight += 1
@@ -175,16 +166,14 @@ class Search:
         return hole_weight
 
 
-    def checkScore(self, solution):
+    def checkScore(self, solution): # score é atualizado sempre que uma linha inteira é completada
 
         lines = 0
         
         for item, count in Counter(y for _, y in solution.game).most_common():
             if count == self.x - 2:
                 solution.game = {(x, y) for (x, y) in solution.game if y != item}  # remove row
-                solution.game = {
-                    (x, y + 1) if y < item else (x, y) for (x, y) in solution.game
-                }
+                solution.game = {(x, y + 1) if y < item else (x, y) for (x, y) in solution.game}
                 lines += 1
 
         return lines
