@@ -14,6 +14,8 @@ class Search:
 
     def __init__(self, state, initial_info, shapes, variables, shapes_keys): 
 
+        # inicializaçao dos dados obtidos do servidor e chamados do student.py
+        
         self.game = {(tup[0],tup[1]) for tup in state['game']}
         self.grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
         self.game_speed = state['game_speed']
@@ -41,7 +43,6 @@ class Search:
 
             for rot in range(0, len(self.shapes[iteration].plan)):
                 
-
                 piece = copy(self.shapes[iteration])
                 piece.rotate(rot)
                 name = piece.name + str(rot)
@@ -55,7 +56,7 @@ class Search:
                     solution.solutions = [*solutions]
 
                     valid_solution = False
-                    while self.valid(solution):
+                    while self.valid(solution): # simulaçao do jogo com as soluçoes validas
 
                         solution.shape.y += 1
                         key = keys.pop(0)
@@ -129,7 +130,7 @@ class Search:
         )
 
 
-    def checkHeight(self, solution):
+    def checkHeight(self, solution): # soma da altura de todas as colunas do jogo
         aggregate_height = 0
 
         for x in range(1, self.x-1):
@@ -138,7 +139,7 @@ class Search:
         return aggregate_height
 
 
-    def checkBumpiness(self,solution):
+    def checkBumpiness(self,solution):  # verifica a diferença de altura de uma coluna com a sua seguinte, nao queremos que seja muito diferente senao significa que está a fazer "torres"
         bumpiness = 0
         
         for x in range(1, self.x-2):
@@ -160,7 +161,7 @@ class Search:
         return bumpiness
 
 
-    def checkHoles(self, solution):
+    def checkHoles(self, solution): # verifica os buracos deixados no jogo pela colocaçao das peças, queremos o mínimo de buracos possivel
 
         hole_weight = 0
         height = self.y
@@ -181,7 +182,7 @@ class Search:
         return hole_weight
 
 
-    def checkScore(self, solution):
+    def checkScore(self, solution): # score é atualizado sempre que uma linha inteira é completada
 
         lines = 0
         

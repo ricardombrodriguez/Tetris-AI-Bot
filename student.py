@@ -115,15 +115,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 def shapesKeys(shapes, initial_info):
 
     grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
-    x = max(grid, key = lambda coord : coord[0])[0] + 1
+    x = max(grid, key = lambda coord : coord[0])[0] + 1         
 
-    shapekeys = dict()    #dict
+    shapekeys = dict()    #dicionario q guarda shape+rotation e todas as teclas possiveis no tabuleiro deça peça para essa rotaçao
 
-    for fshape in shapes:
+    for fshape in shapes:   # para cada shape existente vai descobrir TODAS as combinaçoes de teclas q podem ser premidas
 
         fshape.set_pos((x - fshape.dimensions.x) / 2, 0)
             
-        for rot in range(0, len(fshape.plan)):
+        for rot in range(0, len(fshape.plan)):  # loop para fazer cada rotaçao da peça atual
             
             _fs = copy(fshape)
             _fs.rotate(rot)
@@ -147,8 +147,6 @@ def shapesKeys(shapes, initial_info):
                  
     return shapekeys
 
-# Search the shape 
-# SHAPES = [Shape(s) for s in [S, Z, I, O, J, T, L]]
     
 def findShape(piece):
     
@@ -160,7 +158,7 @@ def findShape(piece):
         fshape = Shape(S)
         fshape.rotate(1)
 
-    #Z (dá erro)
+    #Z (done)
     elif piece[0][0] == piece[2][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
         fshape = Shape(Z)
 
@@ -180,7 +178,7 @@ def findShape(piece):
     elif piece[0][0] == piece[2][0] and piece[0][1] == piece[1][1] and piece[1][0] == piece[3][0] and piece[2][1] == piece[3][1]:
         fshape = Shape(O)
 
-    #J (done acho)
+    #J (done)
     elif piece[0][1] == piece[1][1] and piece[0][0] == piece[2][0] and piece[2][0] == piece[3][0]:
         fshape = Shape(J)
 
@@ -188,7 +186,7 @@ def findShape(piece):
         fshape = Shape(J)
         fshape.rotate(1)
 
-    #T (done acho)
+    #T (done)
     elif piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
         fshape = Shape(T)
 
@@ -196,7 +194,7 @@ def findShape(piece):
         fshape = Shape(T)
         fshape.rotate(1)
 
-    #L
+    #L (done)
     elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
         fshape = Shape(L)
 
