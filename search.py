@@ -2,6 +2,7 @@ from collections import Counter
 from copy import copy
 import time
 from shape import *
+import time
 
 class Solution:
 
@@ -13,6 +14,8 @@ class Search:
 
     def __init__(self, state, initial_info, shapes, variables, shapes_keys): 
 
+        # inicializaçao dos dados obtidos do servidor e chamados do student.py
+        
         self.game = {(tup[0],tup[1]) for tup in state['game']}
         self.grid = {(tup[0],tup[1]) for tup in initial_info['grid']}
         self.game_speed = state['game_speed']
@@ -40,7 +43,6 @@ class Search:
 
             for rot in range(0, len(self.shapes[iteration].plan)):
                 
-
                 piece = copy(self.shapes[iteration])
                 piece.rotate(rot)
                 name = piece.name + str(rot)
@@ -54,7 +56,7 @@ class Search:
                     solution.solutions = [*solutions]
 
                     valid_solution = False
-                    while self.valid(solution):
+                    while self.valid(solution): # simulaçao do jogo com as soluçoes validas
 
                         solution.shape.y += 1
                         key = keys.pop(0)
