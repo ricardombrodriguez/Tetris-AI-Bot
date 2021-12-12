@@ -5,7 +5,6 @@ import os
 import websockets
 from shape import S, Z, I, O, J, T, L, Shape
 from search import *
-import time
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
@@ -85,11 +84,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             # lookahead 3
                             shapes = [current_shape] + next_shapes[:]
 
-                        elif game_speed > 25 and game_speed < 36:
+                        elif game_speed > 25 and game_speed < 32:
                             #lookahead 2
                             shapes = [current_shape] + next_shapes[:-1]
 
-                        elif game_speed >= 36:
+                        elif game_speed >= 32:
                             #lookahead 1
                             shapes = [current_shape] + next_shapes[:-2]
 
@@ -98,7 +97,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         s = Search(state,initial_info,shapes,variables,shapes_keys)
                         s.search()
 
-                        all_keys = [sol.keys for sol in s.best_solution.solutions] if s.best_solution.solutions else [["s"]]*len(shapes)
+                        all_keys = None
+                        try:
+                            all_keys = [sol.keys for sol in s.best_solution.solutions]
+                        except:
+                            all_keys = [["s"]]*len(shapes)
+
                         keys = all_keys.pop(0)
 
                         new_piece = False
@@ -150,25 +154,13 @@ def findShape(piece):
     if piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
         fshape = Shape(S)
 
-    elif piece[0][1] == piece[1][1] and piece[0][0] == piece[3][0] and piece[2][1] == piece[3][1]:
-        fshape = Shape(S)
-        fshape.rotate(1)
-
     #Z (done)
     elif piece[0][0] == piece[2][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
         fshape = Shape(Z)
 
-    elif piece[0][1] == piece[1][1] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
-        fshape = Shape(Z)
-        fshape.rotate(1)
-
     #I (done)
     elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][1] == piece[3][1]:
         fshape = Shape(I)
-
-    elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][0] == piece[3][0]:
-        fshape = Shape(I)
-        fshape.rotate(1)
 
     #O (done)
     elif piece[0][0] == piece[2][0] and piece[0][1] == piece[1][1] and piece[1][0] == piece[3][0] and piece[2][1] == piece[3][1]:
@@ -178,25 +170,13 @@ def findShape(piece):
     elif piece[0][1] == piece[1][1] and piece[0][0] == piece[2][0] and piece[2][0] == piece[3][0]:
         fshape = Shape(J)
 
-    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[2][0] == piece[3][0]:
-        fshape = Shape(J)
-        fshape.rotate(1)
-
     #T (done)
     elif piece[0][0] == piece[1][0] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
         fshape = Shape(T)
 
-    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[1][0] == piece[3][0]:
-        fshape = Shape(T)
-        fshape.rotate(1)
-
     #L (done)
     elif piece[0][0] == piece[1][0] and piece[1][0] == piece[2][0] and piece[2][1] == piece[3][1]:
         fshape = Shape(L)
-
-    elif piece[0][1] == piece[1][1] and piece[1][1] == piece[2][1] and piece[0][0] == piece[3][0]:
-        fshape = Shape(L)
-        fshape.rotate(1)
         
     return fshape
     

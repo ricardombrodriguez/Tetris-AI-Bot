@@ -121,7 +121,7 @@ class Search:
 
         for x in range(1, self.x-1):
             column_coords = {coord for coord in solution.game if coord[0] == x}
-            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y-1))[1]
+            aggregate_height += self.y - min(column_coords, key = lambda coord: coord[1], default = (0,self.y))[1]
         return aggregate_height
 
 
@@ -138,10 +138,7 @@ class Search:
 
             absolute_difference = abs(next_height - this_height)
             
-            if absolute_difference > 6:
-                bumpiness += absolute_difference * 10 
-            else:
-                bumpiness += absolute_difference 
+            bumpiness += absolute_difference 
             
 
         return bumpiness
